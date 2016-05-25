@@ -1,4 +1,4 @@
-# OvirtTSM
+# OvirtVMBackup
 Scripts for backup VM with Ovirt API
 
 ##### What is this repository for? #####
