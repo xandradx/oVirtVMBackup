@@ -1,4 +1,4 @@
 from funciones import print_info, connect
 
-api = connect('https://rhevm-r.itmlabs.local', 'admin@internal', 'S0p0rt3.')
-print_info(api, name='vm01-rhel6')
+api = connect('https://url-to-ovirt-manager', 'admin@internal', 'P4ssw0rd')
+print_info(api, name='vm01')
