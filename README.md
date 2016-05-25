@@ -1,9 +1,9 @@
 # OvirtTSM
-Scripts for backup VM with Ovirt API and TSM ( Tivoli Storage Manager )
+Scripts for backup VM with Ovirt API
 
 ##### What is this repository for? #####
 
-* Script for Backup and Disaster Recovery Plan for RHEV/Ovirt
+* Script for Backup VM in RHEV/Ovirt
 * Version 0.1
 
 lperez@i-t-m.com
