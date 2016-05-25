@@ -1,1 +1,1 @@
-__author__ = 'binary'
+__author__ = 'Luis A. Perez Marin'
