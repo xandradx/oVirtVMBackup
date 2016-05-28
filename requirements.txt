@@ -1,0 +1,3 @@
+lxml==3.6.0
+ovirt-engine-sdk-python==3.6.5.2
+pycurl==7.43.0
