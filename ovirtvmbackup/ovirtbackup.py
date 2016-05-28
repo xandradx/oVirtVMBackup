@@ -2,6 +2,7 @@ from __future__ import print_function
 
 from lxml import etree
 from time import sleep
+from clint.textui import progress
 
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
@@ -35,7 +36,9 @@ class OvirtBackup():
             @param vm: Virtual Machine Name
         """
         try:
-            self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=vm))
+            self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
+            self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
+            self.__wait_snap_progress(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
@@ -46,13 +49,19 @@ class OvirtBackup():
             print("waiting for snapshot to finish...")
             sleep(10)
 
+    def __wait_snap_progress(self, vm, id_snap):
+        """ Time wait while delete spanshot of a Virtual Machine"""
+        for i in progress.bar(range(100)):
+            if self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
+                sleep(1)
+
     def __wait(self, vm, status):
         """Time wait while create and export of a Virtual Machine"""
         if status == '0':
             action = "creation"
         elif status == '1':
             action = "export"
-        while self.apiapi.vms.get(vm).status.state != 'down':
+        while self.api.vms.get(vm).status.state != 'down':
             print("waiting for vm %s...") % action
             sleep(10)
 
@@ -64,7 +73,6 @@ class OvirtBackup():
         try:
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             self.snapshot.delete()
-            self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
@@ -115,5 +123,5 @@ if __name__ == '__main__':
     oVirt.connect()
     #oVirt.create_snap('Inicial', 'centos')
     #print("Eliminando snapshot...")
-    #oVirt.delete_snap('InstallOK', 'Guacamole')
+    oVirt.create_snap('2lab2016', 'Guacamole')
     oVirt.get_ovf('Guacamole', 'lab2016')
