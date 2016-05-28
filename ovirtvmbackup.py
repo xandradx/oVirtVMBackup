@@ -26,8 +26,7 @@ class OvirtBackup():
             self.api = API(url=self.url, username=self.user, password=self.password, insecure='True')
             return self.api
         except RequestError as err:
-            print(err)
-            #print("Error: {} Reason: {}".format(err.status, err.reason))
+            print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
     def create_snap(self, desc, vm):
@@ -37,8 +36,8 @@ class OvirtBackup():
         """
         try:
             self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=vm))
-        except Exception as e:
-            print(e.message)
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
     def __wait_snap(self, vm, id_snap):
@@ -66,8 +65,8 @@ class OvirtBackup():
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             self.snapshot.delete()
             self.__wait_snap(vm, self.snapshot.id)
-        except Exception as e:
-            print(e.message)
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
     def get_ovf(self, vm, desc):
@@ -80,8 +79,20 @@ class OvirtBackup():
             with open(vm + '.ovf', 'w') as ovfFile, open( vm + ".xml", 'w') as xmlFile:
                 ovfFile.write(self.ovf)
                 xmlFile.write(etree.tostring(self.root, pretty_print=True))
-        except Exception as e:
-            print(e.message)
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
+            exit(-1)
+
+    def create_vm_to_export(vm, id_snap, api, new_name):
+        try:
+            snapshots = params.Snapshots(snapshot=[params.Snapshot(id=id_snap)])
+            cluster = api.clusters.get(id=vm.cluster.id)
+            api.vms.add(
+                params.VM(
+                    name=new_name, snapshots=snapshots,
+                    cluster=cluster, template=api.templates.get(name="Blank")))
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
     def get_export_domain(self, vm):
