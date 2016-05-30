@@ -2,7 +2,6 @@ from __future__ import print_function
 
 from lxml import etree
 from time import sleep
-from clint.textui import progress
 
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
@@ -38,7 +37,7 @@ class OvirtBackup():
         try:
             self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
-            self.__wait_snap_progress(vm, self.snapshot.id)
+            self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
@@ -49,11 +48,6 @@ class OvirtBackup():
             print("waiting for snapshot to finish...")
             sleep(10)
 
-    def __wait_snap_progress(self, vm, id_snap):
-        """ Time wait while delete spanshot of a Virtual Machine"""
-        for i in progress.bar(range(100)):
-            if self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
-                sleep(1)
 
     def __wait(self, vm, status):
         """Time wait while create and export of a Virtual Machine"""
