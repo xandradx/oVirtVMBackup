@@ -118,10 +118,4 @@ class OvirtBackup():
         return self.export
 
 if __name__ == '__main__':
-    oVirt = OvirtBackup('https://rhevm.i-t-m.local', 'lperez@itmlabs.local', 'lab2016.')
-    print("Conectando...")
-    oVirt.connect()
-    #oVirt.create_snap('Inicial', 'centos')
-    #print("Eliminando snapshot...")
-    oVirt.create_snap('2lab2016', 'Guacamole')
-    oVirt.get_ovf('Guacamole', 'lab2016')
+    print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
