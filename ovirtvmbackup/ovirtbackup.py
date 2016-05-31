@@ -56,7 +56,7 @@ class OvirtBackup():
         elif status == '1':
             action = "export"
         while self.api.vms.get(vm).status.state != 'down':
-            print("waiting for vm %s...") % action
+            print("waiting for vm {}...".format(action))
             sleep(10)
 
     def delete_snap(self, desc, vm):
@@ -94,6 +94,7 @@ class OvirtBackup():
                 params.VM(
                     name=new_name, snapshots=self.snapshots,
                     cluster=self.cluster, template=self.api.templates.get(name="Blank")))
+            self.__wait(vm,0)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(0)
