@@ -28,7 +28,7 @@ class OvirtBackup():
             return self.api
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
+            exit(0)
 
     def create_snap(self, desc, vm):
         """Create a snapshot from a virtual machine with params:
@@ -36,10 +36,8 @@ class OvirtBackup():
             @param vm: Virtual Machine Name
         """
         try:
-            self.api.vms.get(vm).snapshots.add(params.Snapshot(
-                description=desc, vm=self.api.vms.get(vm)))
-            self.snapshot = self.api.vms.get(vm).snapshots.list(
-                description=desc)[0]
+            self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
+            self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
@@ -81,7 +79,6 @@ class OvirtBackup():
                 all_content=True, description=desc)[0]
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
             self.root = etree.fromstring(self.ovf)
-            #print(etree.tostring(self.root, pretty_print=True))
             with open(vm + '.ovf', 'w') as ovfFile, open( vm + ".xml", 'w') as xmlFile:
                 ovfFile.write(self.ovf)
                 xmlFile.write(etree.tostring(self.root, pretty_print=True))
@@ -114,6 +111,14 @@ class OvirtBackup():
             if self.sd.type_ == "export":
                 self.export = self.sd
         return self.export
+
+    def if_exists_vm(self, vm):
+        """Verify if virtual machine and new virtual machine already exists"""
+        if (self.api.vms.get(vm)):
+            return 1
+        else:
+            return 0
+
 
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
