@@ -44,11 +44,10 @@ class OvirtBackup():
             exit(-1)
 
     def __wait_snap(self, vm, id_snap):
-        """ Time wait while delete spanshot of a Virtual Machine"""
+        """ Time wait while delete snapshot of a Virtual Machine"""
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
             print("waiting for snapshot to finish...")
             sleep(10)
-
 
     def __wait(self, vm, status):
         """Time wait while create and export of a Virtual Machine"""
@@ -86,17 +85,18 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
-    def create_vm_to_export(vm, id_snap, api, new_name):
+    def create_vm_to_export(self, vm, new_name, desc):
         try:
-            snapshots = params.Snapshots(snapshot=[params.Snapshot(id=id_snap)])
-            cluster = api.clusters.get(id=vm.cluster.id)
-            api.vms.add(
+            self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
+            self.snapshots = params.Snapshots(snapshot=[params.Snapshot(id=self.snapshot.id)])
+            self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
+            self.api.vms.add(
                 params.VM(
-                    name=new_name, snapshots=snapshots,
-                    cluster=cluster, template=api.templates.get(name="Blank")))
+                    name=new_name, snapshots=self.snapshots,
+                    cluster=self.cluster, template=self.api.templates.get(name="Blank")))
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
+            exit(0)
 
     def get_export_domain(self, vm):
         """Create a snapshot from a virtual machine with params:
