@@ -23,7 +23,8 @@ class OvirtBackup():
     def connect(self):
         """Connect to oVirt/RHEV API"""
         try:
-            self.api = API(url=self.url, username=self.user, password=self.password, insecure='True')
+            self.api = API(url=self.url, username=self.user,
+                           password=self.password, insecure='True')
             return self.api
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
@@ -35,8 +36,10 @@ class OvirtBackup():
             @param vm: Virtual Machine Name
         """
         try:
-            self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
-            self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
+            self.api.vms.get(vm).snapshots.add(params.Snapshot(
+                description=desc, vm=self.api.vms.get(vm)))
+            self.snapshot = self.api.vms.get(vm).snapshots.list(
+                description=desc)[0]
             self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
@@ -74,7 +77,8 @@ class OvirtBackup():
     def get_ovf(self, vm, desc):
         """Get ovf info from snapshot"""
         try:
-            self.snapshot = self.api.vms.get(vm).snapshots.list(all_content=True, description=desc)[0]
+            self.snapshot = self.api.vms.get(vm).snapshots.list(
+                all_content=True, description=desc)[0]
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
             self.root = etree.fromstring(self.ovf)
             #print(etree.tostring(self.root, pretty_print=True))
