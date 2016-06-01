@@ -2,7 +2,7 @@ from __future__ import print_function
 
 from lxml import etree
 from time import sleep
-
+from progress.spinner import Spinner
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
@@ -45,9 +45,10 @@ class OvirtBackup():
 
     def __wait_snap(self, vm, id_snap):
         """ Time wait while delete snapshot of a Virtual Machine"""
+        spinner = Spinner("waiting for snapshot to finish ")
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
-            print("waiting for snapshot to finish...")
-            sleep(10)
+            #sleep(10)
+            spinner.next()
 
     def __wait(self, vm, status):
         """Time wait while create and export of a Virtual Machine"""
@@ -55,7 +56,8 @@ class OvirtBackup():
             self.action = "creation"
         elif status == '1':
             self.action = "export"
-        while self.api.vms.get(vm).status.state != 'down':
+        while self.get_vm_status(vm) != 'down':
+            print(self.api.vms.get(vm).status.state)
             print("waiting for vm {}...".format(self.action))
             sleep(10)
 
@@ -120,6 +122,10 @@ class OvirtBackup():
         else:
             return 0
 
+    def get_vm_status(self, vm):
+        """Verify status of virtual machine"""
+        self.state = self.api.vms.get(vm).status.state
+        return self.state
 
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
