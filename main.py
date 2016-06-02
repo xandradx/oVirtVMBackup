@@ -49,13 +49,13 @@ def export(url, user, password, name, new_name, description):
         else:
             print(Fore.YELLOW + "creating snapshot")
             oVirt.create_snap(description, name)
-            print(Fore.GREEN + "create snapshot successful")
+            print(Fore.GREEN + "\ncreate snapshot successful")
             print(Fore.YELLOW + "creating new virtual machine {}".format(new_name))
             oVirt.create_vm_to_export(name, new_name, description)
-            print(Fore.GREEN + "create virtual machine {} successful".format(new_name))
+            print(Fore.GREEN + "\ncreate virtual machine {} successful".format(new_name))
             print(Fore.YELLOW + "delete snapshot {}".format(description))
             oVirt.delete_snap(description, name)
-            print(Fore.GREEN + "delete snapshot {} successful".format(new_name))
+            print(Fore.GREEN + "\ndelete snapshot {} successful".format(new_name))
 
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(name))
