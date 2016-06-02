@@ -1,5 +1,4 @@
 colorama==0.3.7
-IPy==0.83
 lxml==3.6.0
 ovirt-engine-sdk-python==3.6.5.2
 progress==1.2
