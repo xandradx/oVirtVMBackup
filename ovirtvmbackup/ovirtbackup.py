@@ -49,16 +49,15 @@ class OvirtBackup():
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
             spinner.next()
 
-    def __wait(self, vm, status):
+    def __wait(self, vm, action):
         """Time wait while create and export of a Virtual Machine"""
-        if status == '0':
+        if action == '0':
             self.action = "creation"
-        elif status == '1':
+        elif action == '1':
             self.action = "export"
         spinner = Spinner(Fore.YELLOW + "waiting for vm {}... ".format(self.action))
         while self.get_vm_status(vm) != 'down':
             spinner.next()
-
 
     def delete_snap(self, desc, vm):
         """Delete a snapshot from a virtual machine with params:
@@ -101,8 +100,8 @@ class OvirtBackup():
             exit(0)
 
     def get_export_domain(self, vm):
-        """Create a snapshot from a virtual machine with params:
-            @param vm: Virtual Machine Name
+        """Return Export Domain
+            :param vm: Virtual Machine Name
         """
         self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
         self.dc = self.api.datacenters.get(id=self.cluster.data_center.id)
@@ -114,11 +113,21 @@ class OvirtBackup():
                 self.export = self.sd
         return self.export
 
+    def get_storage_domains(self,vm):
+        self.datacenter = self.get_dc(vm)
+        return self.datacenter.storagedomains.list()
+
     def get_dc(self, vm):
-        self.dc = self.api.datacenters.get(id=self.get_cluster(vm).id)
+        """Return Datacenter object
+            :param vm: Virtual Machine Name
+        """
+        self.dc = self.api.datacenters.get(id=self.get_cluster(vm).data_center.id)
         return self.dc
 
     def get_cluster(self, vm):
+        """Return Cluster object
+            :param vm: Virtual Machine Name
+        """
         self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
         return self.cluster
 
