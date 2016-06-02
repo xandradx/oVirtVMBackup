@@ -1,11 +1,11 @@
 from __future__ import print_function
 
 from lxml import etree
-from time import sleep
 from progress.spinner import Spinner
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
+from colorama import Fore
 
 
 class OvirtBackup():
@@ -44,10 +44,9 @@ class OvirtBackup():
             exit(-1)
 
     def __wait_snap(self, vm, id_snap):
-        """ Time wait while delete snapshot of a Virtual Machine"""
-        spinner = Spinner("waiting for snapshot to finish ")
+        """ Time wait while create a snapshot of a Virtual Machine"""
+        spinner = Spinner(Fore.YELLOW + "waiting for snapshot to finish... ")
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
-            #sleep(10)
             spinner.next()
 
     def __wait(self, vm, status):
@@ -56,10 +55,10 @@ class OvirtBackup():
             self.action = "creation"
         elif status == '1':
             self.action = "export"
+        spinner = Spinner(Fore.YELLOW + "waiting for vm {}... ".format(self.action))
         while self.get_vm_status(vm) != 'down':
-            print(self.api.vms.get(vm).status.state)
-            print("waiting for vm {}...".format(self.action))
-            sleep(10)
+            spinner.next()
+
 
     def delete_snap(self, desc, vm):
         """Delete a snapshot from a virtual machine with params:
@@ -96,7 +95,7 @@ class OvirtBackup():
                 params.VM(
                     name=new_name, snapshots=self.snapshots,
                     cluster=self.cluster, template=self.api.templates.get(name="Blank")))
-            self.__wait(vm,'0')
+            self.__wait(new_name,'0')
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(0)
