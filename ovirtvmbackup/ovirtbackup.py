@@ -114,6 +114,14 @@ class OvirtBackup():
                 self.export = self.sd
         return self.export
 
+    def get_dc(self, vm):
+        self.dc = self.api.datacenters.get(id=self.get_cluster(vm).id)
+        return self.dc
+
+    def get_cluster(self, vm):
+        self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
+        return self.cluster
+
     def if_exists_vm(self, vm):
         """Verify if virtual machine and new virtual machine already exists"""
         if (self.api.vms.get(vm)):
