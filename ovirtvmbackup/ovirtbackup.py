@@ -143,5 +143,12 @@ class OvirtBackup():
         self.state = self.api.vms.get(vm).status.state
         return self.state
 
+    def delete_tmp_vm(self,new_name):
+        try:
+            self.api.vms.get(name=new_name).delete()
+        except Exception as e:
+            print(e.message)
+            exit(-1)
+
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
