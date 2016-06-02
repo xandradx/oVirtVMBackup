@@ -1,6 +1,7 @@
 from ovirtvmbackup.ovirtbackup import OvirtBackup
 from colorama import init, Fore
 import argparse
+from time import sleep
 
 init(autoreset=True)
 
@@ -37,10 +38,10 @@ def get_args():
     return import_vm, export, vm_name, manager, user, password
 
 def export(url, user, password, name, new_name, description):
-    print("Export virtual machine {}".format(name))
+    print(Fore.LIGHTGREEN_EX + "Export virtual machine {}".format(name))
 
     oVirt = OvirtBackup(url, user, password)
-    print("trying auth...")
+    print(Fore.YELLOW + "trying auth...")
     if (oVirt.connect()):
         print(Fore.GREEN + "auth OK")
     if (oVirt.if_exists_vm(name)):
@@ -55,8 +56,11 @@ def export(url, user, password, name, new_name, description):
             print(Fore.GREEN + "\ncreate virtual machine {} successful".format(new_name))
             print(Fore.YELLOW + "delete snapshot {}".format(description))
             oVirt.delete_snap(description, name)
-            print(Fore.GREEN + "\ndelete snapshot {} successful".format(new_name))
-
+            print(Fore.GREEN + "delete snapshot {} successful".format(new_name))
+            print(Fore.YELLOW + "delete virtual machine {}".format(new_name))
+            oVirt.delete_tmp_vm(new_name)
+            sleep(120)
+            print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(name))
 
