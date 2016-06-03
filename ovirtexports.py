@@ -1,5 +1,9 @@
+from __future__ import print_function
+
 from ovirtvmbackup.ovirtbackup import OvirtBackup
 import os
+from time import sleep
+from progress.spinner import Spinner
 
 virtual_machine = 'Guacamole'
 
@@ -19,36 +23,61 @@ def validIP(address):
             return False
     return True
 
-def check_names(infile):
-    if os.path.isdir(infile):
-        return True
+def validPath(path):
+    if os.path.isabs(path):
+        return 1
     else:
-        return False
+        return 0
+
 for storage_domain in manage.get_storage_domains(virtual_machine):
-    if storage_domain.type_ == "export":
+    if storage_domain.get_type() == "export":
         count += 1
+        print(storage_domain.name)
 
-if count:
-    print(storage_domain.name)
-else:
-    while option != "N":
-        option = raw_input("Desea agregar un export Domain S/N: ")
-        if option.upper() != "S" and option.upper() != "N":
-            print("invalid character")
-        elif option.upper() == "S":
-            break
-        else:
-            option = option.upper()
-            exit(0)
 
-ip_address = raw_input("Ingrese la ip ")
+# if count == 0:
+#    while option != "N":
+#         option = raw_input("Desea agregar un export Domain S/N: ")
+#         if option.upper() != "S" and option.upper() != "N":
+#             print("invalid character")
+#         elif option.upper() == "S":
+#             break
+#         else:
+#             option = option.upper()
+#             exit(1)
 
-if validIP(ip_address):
-    print("{} is a valid ip".format(ip_address))
-    share = raw_input("Please enter share path: ")
-    if check_names(share):
-        print("{} is a valid path".format(share))
-    else:
-        print("{} is not a valid path".format(share))
-else:
-    print("{} is not a valid ip".format(ip_address))
+dc = manage.get_dc('Guacamole')
+
+# ip_address = raw_input("Ingrese la ip ")
+
+# if validIP(ip_address):
+#     print("{} is a valid ip".format(ip_address))
+#     share = raw_input("Please enter share path: ")
+#     if validPath(share):
+#         print("{} is a valid path".format(share))
+#         if manage.api.datacenters.get(id=dc.id).storagedomains.add(manage.api.storagedomains.get('LabExport')):
+#             print 'Export Domain was attached successfully'
+#     else:
+#         print("{} is not a valid path".format(share))
+# else:
+#     print("{} is not a valid ip".format(ip_address))
+#     exit(1)
+
+print(manage.api.storagedomains.get(name="LabExport"))
+
+# do attach
+if manage.api.datacenters.get(id=dc.id).storagedomains.add(manage.api.storagedomains.get('LabExport')):
+    print('Export Domain was attached successfully')
+
+sleep(25)
+
+# do maintenance storage domain
+manage.api.datacenters.get(id=dc.id).storagedomains.get("LabExport").deactivate()
+spinner = Spinner("waiting for maintenance Storage... ")
+while manage.api.datacenters.get(id=dc.id).storagedomains.get("LabExport").get_status().get_state() != "maintenance":
+    spinner.next()
+
+
+# do detach storage domain
+if manage.api.datacenters.get(id=dc.id).storagedomains.get("LabExport").delete():
+    print("Detach OK")
