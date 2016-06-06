@@ -1,4 +1,4 @@
-from ovirtvmbackup.ovirtbackup import OvirtBackup
+from ovirtvmbackup import OvirtBackup
 from colorama import init, Fore
 import argparse
 from time import sleep
@@ -13,7 +13,7 @@ def get_args():
         prog='ovirtbackup')
 
     parser.add_argument('-v', '--version',
-                        action='version', version='%(prog)s 0.2')
+                        action='version', version='%(prog)s 0.3')
     parser.add_argument('--import', action="store_true", dest="imp",
                         help="import virtual machine")
     parser.add_argument('--export', help="export virtual machine",
@@ -26,50 +26,57 @@ def get_args():
                                default='admin@internal')
     requiredNamed.add_argument('--password', help='password for the user',
                                required=True)
+    requiredNamed.add_argument('--export-domain', metavar="EXPORT", dest="export_name",
+                               help='Export Domain Name', required=True)
 
     args = parser.parse_args()
 
-    import_vm = args.imp
-    export = args.export
-    vm_name = args.vmname
-    manager = args.manager
-    user = args.username
-    password = args.password
-    return import_vm, export, vm_name, manager, user, password
+    return args.imp, args.export, args.vmname, args.manager, args.username, args.password, args.export_name
 
-def export(url, user, password, name, new_name, description):
-    print(Fore.LIGHTGREEN_EX + "Export virtual machine {}".format(name))
 
-    oVirt = OvirtBackup(url, user, password)
-    print(Fore.YELLOW + "trying auth...")
-    if (oVirt.connect()):
-        print(Fore.GREEN + "auth OK")
-    if (oVirt.if_exists_vm(name)):
-        if (oVirt.if_exists_vm(new_name)):
+def export(conn, vm_name, new_name, description, export_domain):
+    print(Fore.LIGHTGREEN_EX + "Export virtual machine {}".format(vm_name))
+
+    if (conn.if_exists_vm(vm_name)):
+        if (conn.if_exists_vm(new_name)):
             print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
         else:
             print(Fore.YELLOW + "creating snapshot")
-            oVirt.create_snap(description, name)
-            print(Fore.GREEN + "\ncreate snapshot successful")
+            conn.create_snap(description, vm_name)
+            print(Fore.LIGHTGREEN_EX + "\ncreate snapshot successful")
             print(Fore.YELLOW + "creating new virtual machine {}".format(new_name))
-            oVirt.create_vm_to_export(name, new_name, description)
-            print(Fore.GREEN + "\ncreate virtual machine {} successful".format(new_name))
-            print(Fore.YELLOW + "delete snapshot {}".format(description))
-            oVirt.delete_snap(description, name)
-            print(Fore.GREEN + "delete snapshot {} successful".format(new_name))
-            print(Fore.YELLOW + "delete virtual machine {}".format(new_name))
-            oVirt.delete_tmp_vm(new_name)
-            sleep(120)
-            print(Fore.GREEN + "process finished successful")
+            conn.create_vm_to_export(vm_name, new_name, description)
+            print(Fore.LIGHTGREEN_EX + "\ncreate virtual machine {} successful".format(new_name))
+
+            print(Fore.YELLOW + "Starting Export for Virtual Machine {}".format(new_name))
+            export_dom = conn.get_export_domain(vm_name)
+            if verify_export_domain(export_domain, export_dom.name):
+                conn.export_vm(new_name, export_dom)
+                conn.save_ovf(vm_name, description)
+                print(Fore.YELLOW + "delete snapshot {}".format(description))
+                conn.delete_snap(description, vm_name)
+            else:
+                print(Fore.RED + "Export domain {} doesnt exists".format(export_domain))
+                exit(1)
+
+            print(Fore.YELLOW + "\ndelete virtual machine {}".format(new_name))
+            conn.delete_tmp_vm(new_name)
+            print(Fore.LIGHTGREEN_EX + "process finished successful")
     else:
-        print(Fore.RED + "Virtual Machine {} doesn't exists".format(name))
+        print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
 
 def vm_import(name):
     print("Import virtual machine {}".format(name))
     pass
 
+def verify_export_domain(name, extract_domain):
+    if extract_domain == name:
+        return 1
+    else:
+        return 0
+
 def main():
-    is_import, is_export, name, manager, user, password = get_args()
+    is_import, is_export, name, manager, user, password , export_domain = get_args()
     new_name = name + "-snap"
     description = "oVirtBackup"
     url = "https://" + manager
@@ -79,10 +86,15 @@ def main():
     if (is_import) and (is_export):
         print(Fore.RED + "Export or Import NOT must be combined")
         exit(1)
-    elif (is_import):
-        vm_import(name)
-    elif (is_export):
-        export(url, user, password, name, new_name, description)
+    else:
+        oVirt = OvirtBackup(url, user, password)
+        print(Fore.YELLOW + "trying auth...")
+        if (oVirt.connect()):
+            print(Fore.LIGHTGREEN_EX + "auth OK")
+        if (is_import):
+            vm_import(name)
+        elif (is_export):
+            export(oVirt, name, new_name, description, export_domain)
 
 if __name__ == '__main__':
     main()
