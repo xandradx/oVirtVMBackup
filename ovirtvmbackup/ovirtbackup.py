@@ -51,9 +51,9 @@ class OvirtBackup():
 
     def __wait(self, vm, action):
         """Time wait while create and export of a Virtual Machine"""
-        if action == '0':
+        if action == 0:
             self.action = "creation"
-        elif action == '1':
+        elif action == 1:
             self.action = "export"
         spinner = Spinner(Fore.YELLOW + "waiting for vm {}... ".format(self.action))
         while self.get_vm_status(vm) != 'down':
@@ -71,14 +71,16 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
-    def get_ovf(self, vm, desc):
+    def save_ovf(self, vm, desc):
         """Get ovf info from snapshot"""
         try:
             self.snapshot = self.api.vms.get(vm).snapshots.list(
                 all_content=True, description=desc)[0]
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
             self.root = etree.fromstring(self.ovf)
-            with open(vm + '.ovf', 'w') as ovfFile, open( vm + ".xml", 'w') as xmlFile:
+
+            with open(self.api.vms.get(vm).id + '.ovf', 'w') as ovfFile, \
+                    open( self.api.vms.get(vm).id + ".xml", 'w') as xmlFile:
                 ovfFile.write(self.ovf)
                 xmlFile.write(etree.tostring(self.root, pretty_print=True))
         except RequestError as err:
@@ -94,7 +96,7 @@ class OvirtBackup():
                 params.VM(
                     name=new_name, snapshots=self.snapshots,
                     cluster=self.cluster, template=self.api.templates.get(name="Blank")))
-            self.__wait(new_name,'0')
+            self.__wait(new_name, 0)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(0)
@@ -103,13 +105,15 @@ class OvirtBackup():
         """Return Export Domain
             :param vm: Virtual Machine Name
         """
-        self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
-        self.dc = self.api.datacenters.get(id=self.cluster.data_center.id)
+        # self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
+        # self.dc = self.api.datacenters.get(id=self.cluster.data_center.id)
+        self.cluster = self.get_cluster(vm)
+        self.dc = self.get_dc(vm)
 
         self.export = None
 
         for self.sd in self.dc.storagedomains.list():
-            if self.sd.type_ == "export":
+            if self.sd.get_type() == "export":
                 self.export = self.sd
         return self.export
 
@@ -149,6 +153,14 @@ class OvirtBackup():
         except Exception as e:
             print(e.message)
             exit(-1)
+
+    def export_vm(self, new_name, export):
+        try:
+            self.api.vms.get(name=new_name).export(params.Action(storage_domain=export))
+            self.__wait(new_name, 1)
+        except Exception as e:
+            print(e.message)
+            exit(1)
 
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
