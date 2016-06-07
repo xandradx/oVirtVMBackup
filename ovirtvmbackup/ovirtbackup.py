@@ -79,10 +79,8 @@ class OvirtBackup():
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
             self.root = etree.fromstring(self.ovf)
 
-            with open(self.api.vms.get(vm).id + '.ovf', 'w') as ovfFile, \
-                    open( self.api.vms.get(vm).id + ".xml", 'w') as xmlFile:
+            with open(self.api.vms.get(vm).id + '.ovf', 'w') as ovfFile:
                 ovfFile.write(self.ovf)
-                xmlFile.write(etree.tostring(self.root, pretty_print=True))
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
