@@ -53,7 +53,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             if verify_export_domain(export_domain, export_dom.name):
                 conn.export_vm(new_name, export_dom)
                 conn.save_ovf(vm_name, description)
-                print(Fore.YELLOW + "delete snapshot {}".format(description))
+                print(Fore.YELLOW + "\ndelete snapshot {}".format(description))
                 conn.delete_snap(description, vm_name)
             else:
                 print(Fore.RED + "Export domain {} doesnt exists".format(export_domain))
