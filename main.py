@@ -35,7 +35,7 @@ def get_args():
 
 
 def export(conn, vm_name, new_name, description, export_domain):
-    print(Fore.LIGHTGREEN_EX + "Export virtual machine {}".format(vm_name))
+    print(Fore.GREEN + "Export virtual machine {}".format(vm_name))
 
     if (conn.if_exists_vm(vm_name)):
         if (conn.if_exists_vm(new_name)):
@@ -43,10 +43,10 @@ def export(conn, vm_name, new_name, description, export_domain):
         else:
             print(Fore.YELLOW + "creating snapshot")
             conn.create_snap(description, vm_name)
-            print(Fore.LIGHTGREEN_EX + "\ncreate snapshot successful")
+            print(Fore.GREEN + "\ncreate snapshot successful")
             print(Fore.YELLOW + "creating new virtual machine {}".format(new_name))
             conn.create_vm_to_export(vm_name, new_name, description)
-            print(Fore.LIGHTGREEN_EX + "\ncreate virtual machine {} successful".format(new_name))
+            print(Fore.GREEN + "\ncreate virtual machine {} successful".format(new_name))
 
             print(Fore.YELLOW + "Starting Export for Virtual Machine {}".format(new_name))
             export_dom = conn.get_export_domain(vm_name)
@@ -61,7 +61,7 @@ def export(conn, vm_name, new_name, description, export_domain):
 
             print(Fore.YELLOW + "\ndelete virtual machine {}".format(new_name))
             conn.delete_tmp_vm(new_name)
-            print(Fore.LIGHTGREEN_EX + "process finished successful")
+            print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
 
@@ -90,7 +90,7 @@ def main():
         oVirt = OvirtBackup(url, user, password)
         print(Fore.YELLOW + "trying auth...")
         if (oVirt.connect()):
-            print(Fore.LIGHTGREEN_EX + "auth OK")
+            print(Fore.GREEN + "auth OK")
         if (is_import):
             vm_import(name)
         elif (is_export):
