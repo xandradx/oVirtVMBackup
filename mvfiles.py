@@ -13,6 +13,9 @@ export_path = "/exportdomain/"
 disk_id1 = "d16b86a8-0f7b-4777-a4da-22380b1fd386"
 disk_id2 = "2f0c7f3b-7a65-439f-a55f-e258057c5b86"
 
+gid_1 = 'cff0f290-44df-42f7-bb1d-6714d76f2644'
+gid_2 = 'd3566356-dfff-4d02-b62a-9dca30c7839f'
+
 storage_id = "e412a6d5-8d62-4df5-a71c-352c50287a55/"
 vm_id = "696121ff-d098-4b3b-bd23-f357037608b1"
 virtual_machine = "Guacamole"
@@ -49,28 +52,28 @@ for root, directories, filenames in os.walk(os.getcwd()):
 #            print("------------------------------")
             dir_to_copy.append(root)
 
-
-#print(dir_to_copy)
+vms_path = '/master/vms/'
+images_path = '/images/'
 
 def create_dirs(vm_name, export_path):
-    vms_path = 'master/vms/'
-    images_path = 'images/'
-    if not os.chdir(export_path):
-        if not os.mkdir(vm_name):
-            if not os.chdir(vm_name):
-                if not os.mkdir(images_path):
-                    os.makedirs(vms_path + vm_id)
-    else:
-        print("Error to create dirs")
+    try:
+        os.makedirs(export_path + vm_name + vms_path)
+        os.makedirs(export_path + vm_name + images_path)
+    except OSError as e:
+        print(e)
 
-#create_dirs(virtual_machine, export_path)
-destination_dir = export_path + virtual_machine + '/master/vms/' + vm_id
+create_dirs(virtual_machine, export_path)
+destination_dir = export_path + virtual_machine + vms_path
+destination_dir_images = export_path + virtual_machine + images_path
 
-os.chdir(export_path + storage_id + 'master/vms/')
+print(destination_dir)
+print(destination_dir_images)
+os.chdir(export_path + storage_id + vms_path)
 print(os.listdir(os.getcwd()))
-#shutil.copytree(vm_id, destination_dir)
-
-
+shutil.move(vm_id,destination_dir)
+os.chdir(export_path + storage_id + images_path)
+shutil.move(gid_1,destination_dir_images)
+shutil.move(gid_2,destination_dir_images)
 
 def create_tar():
     for dir_saved in dir_to_copy:
