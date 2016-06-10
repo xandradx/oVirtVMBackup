@@ -19,7 +19,7 @@ disks = list()
 StorageId = xml_doc.createElement("rasd:StorageId")
 content = xml_doc.createTextNode(st_id)
 StorageId.appendChild(content)
-print(StorageId.toxml())
+
 
 for item in xml_doc.getElementsByTagName("Device"):
     if item.firstChild.nodeValue == "disk":
