@@ -11,57 +11,63 @@ manage = OvirtBackup("https://rhevm.i-t-m.local", 'lperez@itmlabs.local', 'lab20
 
 manage.connect()
 
-count = 0
-option = "S"
+export_name = "LabExport"
 
-def validIP(address):
-    parts = address.split(".")
-    if len(parts) != 4:
-        return False
-    for item in parts:
-        if not 0 <= int(item) <= 255:
-            return False
-    return True
+dc = manage.get_dc(virtual_machine)
 
-def validPath(path):
-    if os.path.isabs(path):
-        return 1
-    else:
+export_attached = manage.get_export_domain(virtual_machine)
+
+def verify_valid_export(vm, dc_id, export, current):
+    if current == export:
+        if manage.api.datacenters.get(id=dc_id).storagedomains.get(
+                export).get_status().get_state() == "active":
+            return 1
+        else:
+            return 2
+    elif current != export:
         return 0
 
-for storage_domain in manage.get_storage_domains(virtual_machine):
-    if storage_domain.get_type() == "export":
-        count += 1
-        print(storage_domain.name)
+def detach_export(dc_id, export):
+    if manage.api.datacenters.get(id=dc_id).storagedomains.get(export).delete():
+        print("Detach OK")
+
+def do_export_maintenance(dc_id, export):
+    manage.api.datacenters.get(id=dc_id).storagedomains.get(export).deactivate()
+    spinner = Spinner("waiting for maintenance Storage... ")
+    while manage.api.datacenters.get(id=dc.id).storagedomains.get(
+            export).get_status().get_state() != "maintenance":
+        spinner.next()
+
+def attach_export(dc_id, export_ok):
+    if manage.api.datacenters.get(id=dc.id).storagedomains.add(manage.api.storagedomains.get(export_ok)):
+        print('Export Domain was attached successfully')
 
 
-# if count == 0:
-#    while option != "N":
-#         option = raw_input("Desea agregar un export Domain S/N: ")
-#         if option.upper() != "S" and option.upper() != "N":
-#             print("invalid character")
-#         elif option.upper() == "S":
-#             break
-#         else:
-#             option = option.upper()
-#             exit(1)
+def do_export_up(dc_id, export):
+    if manage.api.datacenters.get(id=dc_id).storagedomains.get(export).activate():
+        print('Export Domain was activate successfully')
 
+def prepare_export(dc_id, vm, name_export):
+    print("Distinto")
+    do_export_maintenance(dc_id, name_export)
+    detach_export(dc_id, name_export)
+
+status_export = verify_valid_export(virtual_machine, dc.id, export_name, export_attached.name)
+
+if export_attached is not None:
+    if status_export == 1:
+        print("Export {} is OK".format(export_name))
+    elif status_export == 0:
+        prepare_export(dc.id, virtual_machine, export_attached.name)
+        attach_export(dc.id, export_name)
+    elif status_export == 2:
+        do_export_up(dc.id, export_name)
+elif export_attached is None:
+    attach_export(dc.id, export_name)
+
+
+"""
 dc = manage.get_dc('Guacamole')
-
-# ip_address = raw_input("Ingrese la ip ")
-
-# if validIP(ip_address):
-#     print("{} is a valid ip".format(ip_address))
-#     share = raw_input("Please enter share path: ")
-#     if validPath(share):
-#         print("{} is a valid path".format(share))
-#         if manage.api.datacenters.get(id=dc.id).storagedomains.add(manage.api.storagedomains.get('LabExport')):
-#             print 'Export Domain was attached successfully'
-#     else:
-#         print("{} is not a valid path".format(share))
-# else:
-#     print("{} is not a valid ip".format(ip_address))
-#     exit(1)
 
 print(manage.api.storagedomains.get(name="LabExport"))
 
@@ -81,3 +87,4 @@ while manage.api.datacenters.get(id=dc.id).storagedomains.get("LabExport").get_s
 # do detach storage domain
 if manage.api.datacenters.get(id=dc.id).storagedomains.get("LabExport").delete():
     print("Detach OK")
+"""

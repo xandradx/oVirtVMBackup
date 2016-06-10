@@ -4,7 +4,7 @@ DC_NAME =       'ITM'
 CLUSTER_NAME =  'CProd'
 HOST_NAME =     'vmnode01.i-t-m.local'
 STORAGE_NAME =  'DS01'
-EXPORT_NAME =   'Export'
+EXPORT_NAME =   'LabExport'
 VM_NAME =       'fedora23-test'
 
 ovirt = OvirtBackup('https://rhevm.i-t-m.local/api', 'lperez@itmlabs.local', 'lab2016.')
@@ -21,3 +21,6 @@ print("CLUSTER id: {} name: {}".format(CLUSTER.id, CLUSTER.name))
 print("DATACENTER id: {} name: {}".format(DATACENTER.id, DATACENTER.name))
 for st in STORAGE_DOMAINS:
     print("STORAGE id: {} name: {} type: {}".format(st.id, st.name, st.type_))
+
+print(ovirt.api.datacenters.get(id=DATACENTER.id).storagedomains.get(
+                EXPORT_NAME).get_status().get_state())
