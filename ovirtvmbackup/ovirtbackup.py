@@ -185,14 +185,14 @@ class OvirtBackup():
 
     def attach_export(self, dc_id, export_ok):
         if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export_ok)):
-            print('Export Domain was attached successfully')
+            print("Export Domain was attached successfully")
 
     def do_export_up(self, dc_id, export):
         if self.api.datacenters.get(id=dc_id).storagedomains.get(export).activate():
             print('Export Domain was activate successfully')
 
     def prepare_export(self, dc_id, vm, name_export):
-        print("Distinto")
+        print("Different Export Attached")
         self.do_export_maintenance(dc_id, name_export)
         self.detach_export(dc_id, name_export)
 
