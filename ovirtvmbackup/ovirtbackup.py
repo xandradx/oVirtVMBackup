@@ -36,6 +36,11 @@ class OvirtBackup():
             @param vm: Virtual Machine Name
         """
         try:
+            snapshot = self.snapshot = self.api.vms.get(vm).snapshots.list()
+            for snap in snapshot:
+                if snap.description == desc:
+                    self.delete_snap(desc=desc, vm=vm)
+
             self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             self.__wait_snap(vm, self.snapshot.id)
@@ -43,9 +48,16 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
+    def snapshot_status(self, vm, snap_id):
+        snapshot = self.api.vms.get(vm).snapshots.get(id=snap_id)
+        if snapshot:
+            return True
+        else:
+            return False
+
     def __wait_snap(self, vm, id_snap):
         """ Time wait while create a snapshot of a Virtual Machine"""
-        spinner = Spinner(Fore.YELLOW + "waiting for snapshot to finish... ")
+        spinner = Spinner(Fore.YELLOW + "\nwaiting for snapshot to finish... ")
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
             spinner.next()
 
@@ -65,8 +77,11 @@ class OvirtBackup():
             @param vm: Virtual Machine Name
         """
         try:
-            self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
-            self.snapshot.delete()
+            snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
+            snapshot.delete()
+            spinner = Spinner(Fore.RED + "waiting for delete snapshot... ")
+            while self.snapshot_status(vm, snap_id=snapshot.id):
+                spinner.next()
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
