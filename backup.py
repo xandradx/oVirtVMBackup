@@ -5,6 +5,10 @@ from time import sleep
 
 init(autoreset=True)
 
+path_export = "/exportdomain/"
+vms_path = "/master/vms/"
+images_path = "/images/"
+
 def get_args():
     '''Function parses and return arguments passed in'''
 
@@ -37,30 +41,26 @@ def get_args():
 def export(conn, vm_name, new_name, description, export_domain):
     print(Fore.GREEN + "Export virtual machine {}".format(vm_name))
 
-    if (conn.if_exists_vm(vm_name)):
-        if (conn.if_exists_vm(new_name)):
+    if (conn.if_exists_vm(vm=vm_name)):
+        if (conn.if_exists_vm(vm=new_name)):
             print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
         else:
             print(Fore.YELLOW + "creating snapshot")
-            conn.create_snap(description, vm_name)
+            conn.create_snap(desc=description, vm=vm_name)
             print(Fore.GREEN + "\ncreate snapshot successful")
             print(Fore.YELLOW + "creating new virtual machine {}".format(new_name))
-            conn.create_vm_to_export(vm_name, new_name, description)
+            conn.create_vm_to_export(vm=vm_name, new_name=new_name, desc=description)
             print(Fore.GREEN + "\ncreate virtual machine {} successful".format(new_name))
+            print(Fore.YELLOW + "Activating Export Domain {}".format(export_domain))
+            conn.active_export(vm=vm_name, export_name=export_domain)
+            print(Fore.GREEN + "Export domain {} successful activated".format(export_domain))
+            print(Fore.YELLOW + "Export Virtual Machine {}".format(new_name))
+            export_dom = conn.get_export_domain(vm=vm_name)
+            conn.export_vm(new_name, export_dom)
+            print(Fore.GREEN + "Export Virtual Machine {} successful".format(export_domain))
+            print(Fore.YELLOW + "Moving export to another location")
 
-            print(Fore.YELLOW + "Starting Export for Virtual Machine {}".format(new_name))
-            export_dom = conn.get_export_domain(vm_name)
-            if verify_export_domain(export_domain, export_dom.name):
-                conn.export_vm(new_name, export_dom)
-                conn.save_ovf(vm_name, description)
-                print(Fore.YELLOW + "\ndelete snapshot {}".format(description))
-                conn.delete_snap(description, vm_name)
-            else:
-                print(Fore.RED + "Export domain {} doesnt exists".format(export_domain))
-                exit(1)
 
-            print(Fore.YELLOW + "\ndelete virtual machine {}".format(new_name))
-            conn.delete_tmp_vm(new_name)
             print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
@@ -69,11 +69,6 @@ def vm_import(name):
     print("Import virtual machine {}".format(name))
     pass
 
-def verify_export_domain(name, extract_domain):
-    if extract_domain == name:
-        return 1
-    else:
-        return 0
 
 def main():
     is_import, is_export, name, manager, user, password , export_domain = get_args()
