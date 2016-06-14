@@ -1,11 +1,13 @@
 from __future__ import print_function
 
+import shutil
 from lxml import etree
 from progress.spinner import Spinner
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
 from colorama import Fore
+import os
 
 
 class OvirtBackup():
@@ -197,8 +199,12 @@ class OvirtBackup():
             spinner.next()
 
     def attach_export(self, dc_id, export_ok):
-        if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export_ok)):
-            print("Export Domain was attached successfully")
+        try:
+            if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export_ok)):
+                print("Export Domain was attached successfully")
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
+            exit(0)
 
     def do_export_up(self, dc_id, export):
         if self.api.datacenters.get(id=dc_id).storagedomains.get(export).activate():
@@ -223,6 +229,43 @@ class OvirtBackup():
                 self.do_export_up(dc.id, export_name)
         elif export_attached is None:
             self.attach_export(dc.id, export_name)
+
+# Seccion de funciones para movimiento de archivos
+
+    def create_dirs(self, vm_name, export_path, images, vms):
+        try:
+            os.makedirs(export_path + vm_name + vms)
+            os.makedirs(export_path + vm_name + images)
+        except OSError as e:
+            print(e)
+
+    def mv_data(self, new_name, export, source, destination, stid):
+            self.dest = export + new_name + destination
+            os.chdir(export + stid + destination)
+            shutil.move(source, self.dest)
+
+    def do_mv(self, new_vm, export_path, images, vms):
+        vm = self.api.vms.get(new_vm)
+        #disks = self.api.vms.get(new_vm).disks.list()
+        storage_id = self.get_export_domain(new_vm)
+        disks = vm.disks.list()
+        objects = {"Disks": list(), "Vms": list()}
+        objects["Vms"].append(vm.id)
+
+        for disk in disks:
+            objects["Disks"].append(disk.id)
+        # print("Disk {} ID: {}".format(disk.name, disk.id))
+
+        # print("VM {} ID: {}".format(vm.name, vm.id))
+        # print(objects)
+
+        self.create_dirs(vm_name=vm.name, export_path=export_path, images=images, vms=vms)
+
+        for disk in objects["Disks"]:
+            self.mv_data(new_vm, export_path, disk, images, storage_id.id)
+
+        for vm in objects["Vms"]:
+            self.mv_data(new_vm, export_path, vm, vms, storage_id.id)
 
 
 if __name__ == '__main__':
