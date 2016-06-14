@@ -88,7 +88,7 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
 
-    def save_ovf(self, vm, desc):
+    def get_running_ovf(self, vm, desc):
         """Get ovf info from snapshot"""
         try:
             self.snapshot = self.api.vms.get(vm).snapshots.list(
