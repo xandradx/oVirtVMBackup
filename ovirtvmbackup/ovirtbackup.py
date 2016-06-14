@@ -244,11 +244,11 @@ class OvirtBackup():
             os.chdir(export + stid + destination)
             shutil.move(source, self.dest)
 
-    def do_mv(self, new_vm, export_path, images, vms):
-        vm = self.api.vms.get(new_vm)
-        #disks = self.api.vms.get(new_vm).disks.list()
-        storage_id = self.get_export_domain(new_vm)
-        disks = vm.disks.list()
+    def do_mv(self, vm, export_path, images, vms):
+        obj_vm = self.api.vms.get(vm)
+        # disks = self.api.vms.get(new_vm).disks.list()
+        storage_id = self.get_export_domain(vm)
+        disks = obj_vm.disks.list()
         objects = {"Disks": list(), "Vms": list()}
         objects["Vms"].append(vm.id)
 
@@ -259,13 +259,13 @@ class OvirtBackup():
         # print("VM {} ID: {}".format(vm.name, vm.id))
         # print(objects)
 
-        self.create_dirs(vm_name=vm.name, export_path=export_path, images=images, vms=vms)
+        #self.create_dirs(vm_name=vm.name, export_path=export_path, images=images, vms=vms)
 
         for disk in objects["Disks"]:
-            self.mv_data(new_vm, export_path, disk, images, storage_id.id)
+            self.mv_data(vm, export_path, disk, images, storage_id.id)
 
-        for vm in objects["Vms"]:
-            self.mv_data(new_vm, export_path, vm, vms, storage_id.id)
+        for vm_iter in objects["Vms"]:
+            self.mv_data(vm, export_path, vm_iter, vms, storage_id.id)
 
 
 if __name__ == '__main__':
