@@ -59,8 +59,9 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.export_vm(new_name, export_dom)
             print(Fore.GREEN + "Export Virtual Machine {} successful".format(export_domain))
             print(Fore.YELLOW + "Moving export to another location")
-
-
+            conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
+            conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
+            print(Fore.GREEN + "Move successful")
             print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
@@ -89,7 +90,10 @@ def main():
         if (is_import):
             vm_import(name)
         elif (is_export):
-            export(oVirt, name, new_name, description, export_domain)
+            export(
+                conn=oVirt, vm_name=name, new_name=new_name,
+                description=description, export_domain=export_domain
+            )
 
 if __name__ == '__main__':
     main()
