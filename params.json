@@ -1,0 +1,6 @@
+{
+  "name": "Ovirtvmbackup",
+  "tagline": "Scripts for backup VM with oVirt API",
+  "body": "# OvirtVMBackup\r\nScripts for backup VM with Ovirt API\r\n\r\n##### What is this repository for? #####\r\n\r\n* Script for Backup VM in RHEV/Ovirt\r\n* Version 0.1\r\n\r\nlperez@i-t-m.com\r\n\r\nluis.luimarin@gmail.com\r\n",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
