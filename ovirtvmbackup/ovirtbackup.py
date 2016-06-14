@@ -59,7 +59,7 @@ class OvirtBackup():
 
     def __wait_snap(self, vm, id_snap):
         """ Time wait while create a snapshot of a Virtual Machine"""
-        spinner = Spinner(Fore.YELLOW + "\nwaiting for snapshot to finish... ")
+        spinner = Spinner(Fore.YELLOW + "waiting for snapshot to finish... ")
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
             spinner.next()
 
@@ -155,7 +155,7 @@ class OvirtBackup():
 
     def export_vm(self, new_name, export):
         try:
-            self.api.vms.get(name=new_name).export(params.Action(storage_domain=export))
+            self.api.vms.get(name=new_name).export(params.Action(storage_domain=export, force=True))
             self.__wait(new_name, 1)
         except Exception as e:
             print(e.message)
@@ -250,10 +250,12 @@ class OvirtBackup():
         storage_id = self.get_export_domain(vm)
         disks = obj_vm.disks.list()
         objects = {"Disks": list(), "Vms": list()}
-        objects["Vms"].append(vm.id)
+        objects["Vms"].append(obj_vm.id)
 
         for disk in disks:
             objects["Disks"].append(disk.id)
+
+        old_name = vm.split("-")
         # print("Disk {} ID: {}".format(disk.name, disk.id))
 
         # print("VM {} ID: {}".format(vm.name, vm.id))
@@ -262,10 +264,10 @@ class OvirtBackup():
         #self.create_dirs(vm_name=vm.name, export_path=export_path, images=images, vms=vms)
 
         for disk in objects["Disks"]:
-            self.mv_data(vm, export_path, disk, images, storage_id.id)
+            self.mv_data(old_name[0], export_path, disk, images, storage_id.id)
 
         for vm_iter in objects["Vms"]:
-            self.mv_data(vm, export_path, vm_iter, vms, storage_id.id)
+            self.mv_data(old_name[0], export_path, vm_iter, vms, storage_id.id)
 
 
 if __name__ == '__main__':

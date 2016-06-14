@@ -57,11 +57,16 @@ def export(conn, vm_name, new_name, description, export_domain):
             print(Fore.YELLOW + "Export Virtual Machine {}".format(new_name))
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(new_name, export_dom)
-            print(Fore.GREEN + "Export Virtual Machine {} successful".format(export_domain))
+            print(Fore.GREEN + "\nExport Virtual Machine {} successful".format(export_domain))
             print(Fore.YELLOW + "Moving export to another location")
-            conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
+            #conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
-            print(Fore.GREEN + "Move successful")
+
+            # Eliminando snapshot y {vm}-snap
+            conn.delete_snap(vm=vm_name, desc=description)
+            conn.delete_tmp_vm(new_name=new_name)
+
+            print(Fore.GREEN + "\nMove successful")
             print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
