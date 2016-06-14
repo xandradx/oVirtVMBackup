@@ -5,7 +5,7 @@ CLUSTER_NAME =  'CProd'
 HOST_NAME =     'vmnode01.i-t-m.local'
 STORAGE_NAME =  'DS01'
 EXPORT_NAME =   'LabExport'
-VM_NAME =       'fedora23-test'
+VM_NAME =       'Web01'
 
 ovirt = OvirtBackup('https://rhevm.i-t-m.local/api', 'lperez@itmlabs.local', 'lab2016.')
 ovirt.connect()
