@@ -165,8 +165,6 @@ class OvirtBackup():
         """Return Export Domain
             :param vm: Virtual Machine Name
         """
-        # self.cluster = self.api.clusters.get(id=self.api.vms.get(vm).cluster.id)
-        # self.dc = self.api.datacenters.get(id=self.cluster.data_center.id)
         self.cluster = self.get_cluster(vm)
         self.dc = self.get_dc(vm)
 
