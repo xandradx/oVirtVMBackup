@@ -18,7 +18,7 @@ def create_dirs(vm_name, export_path):
 def mv_data(new_name, export, source, destination):
     st = manage.get_export_domain(new_name)
     if export_name == st.name:
-        dest = path_export + new_name + destination
+        dest = export + new_name + destination
         os.chdir(export + st.id + destination)
         shutil.move(source, dest)
 
@@ -33,11 +33,11 @@ objects = { "Disks": list(), "Vms": list() }
 objects["Vms"].append(vm.id)
 
 for disk in disks:
-    print("Disk {} ID: {}".format(disk.name, disk.id))
+#    print("Disk {} ID: {}".format(disk.name, disk.id))
     objects["Disks"].append(disk.id)
 
-print("VM {} ID: {}".format(vm.name, vm.id))
-print(objects)
+#print("VM {} ID: {}".format(vm.name, vm.id))
+#print(objects)
 
 vm_new = vm.name
 
