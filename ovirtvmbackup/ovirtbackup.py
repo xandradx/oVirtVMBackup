@@ -305,6 +305,12 @@ class OvirtBackup():
         except OSError as e:
             print(e)
 
+    def delete_tmp_ovf(self, path):
+        try:
+            os.remove(path)
+        except OSError as e:
+            print(e)
+
     def export_xml_path(self, path, vm, find_path=None):
         if find_path is not None:
             complete_path = path + vm + find_path
