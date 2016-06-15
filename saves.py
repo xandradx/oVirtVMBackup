@@ -25,4 +25,5 @@ ovf_final = os.path.basename(original_xml)[8:]
 vms_path_save = path_export + virtual_machine + vms_path
 print(vms_path_save)
 ovbackup.save_new_ovf(path=vms_path_save, name=ovf_final, xml=xml_obj)
+ovbackup.delete_tmp_ovf(path=path_export + virtual_machine + "/running-" + ovf_final)
 ovbackup.change_owner(path=path_export + virtual_machine)
