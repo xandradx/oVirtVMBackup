@@ -10,7 +10,7 @@ xml_doc_new = minidom.parse(file_name_new)
 disks_old = xml_doc.getElementsByTagName('Disk')
 disks_new = xml_doc_new.getElementsByTagName('Disk')
 
-disks_old[0].attributes["ovf:fileRef"].value
+print(disks_old[0].attributes["ovf:fileRef"].value)
 
 for attr in range(len(disks_old)):
     print("disk id{} {} == {}".format(
