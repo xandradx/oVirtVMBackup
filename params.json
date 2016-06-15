@@ -1,6 +1,6 @@
 {
   "name": "Ovirtvmbackup",
   "tagline": "Scripts for backup VM with oVirt API",
-  "body": "# OvirtVMBackup\r\nScripts for backup VM with Ovirt API\r\n\r\n##### What is this repository for? #####\r\n\r\n* Script for Backup VM in RHEV/Ovirt\r\n* Version 0.1\r\n\r\nlperez@i-t-m.com\r\n\r\nluis.luimarin@gmail.com\r\n",
+  "body": "# OvirtVMBackup\r\nScripts for backup VM with Ovirt API\r\n\r\nAlgorithm\r\n\r\n1. Generate Snapshot to a VM\r\n2. Clone VM from snapshot\r\n3. Validate export domain for backups\r\n4. Export VM\r\n5. Move export VM to another location ( for integrate with third party software backup )\r\n6. Generate xml from running VM snapshot\r\n7. Modify xml to add rasd:storageId and Disks from clone VM ovf\r\n8. Finish Backup\r\n\r\n##### What is this repository for? #####\r\n\r\n* Script for Backup VM in RHEV/Ovirt\r\n* Version 0.1\r\n\r\nlperez@i-t-m.com\r\n\r\nluis.luimarin@gmail.com\r\n",
   "note": "Don't delete this file! It's used internally to help with page regeneration."
 }

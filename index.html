@@ -33,6 +33,19 @@
 
 <p>Scripts for backup VM with Ovirt API</p>
 
+<p>Algorithm</p>
+
+<ol>
+<li>Generate Snapshot to a VM</li>
+<li>Clone VM from snapshot</li>
+<li>Validate export domain for backups</li>
+<li>Export VM</li>
+<li>Move export VM to another location ( for integrate with third party software backup )</li>
+<li>Generate xml from running VM snapshot</li>
+<li>Modify xml to add rasd:storageId and Disks from clone VM ovf</li>
+<li>Finish Backup</li>
+</ol>
+
 <h5>
 <a id="what-is-this-repository-for" class="anchor" href="#what-is-this-repository-for" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>What is this repository for?</h5>
 
