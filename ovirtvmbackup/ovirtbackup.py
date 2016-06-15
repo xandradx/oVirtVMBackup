@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import fnmatch
 import shutil
 from lxml import etree
 from progress.spinner import Spinner
@@ -8,6 +9,8 @@ from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
 from colorama import Fore
 import os
+
+from xml.dom import minidom
 
 
 class OvirtBackup():
@@ -84,20 +87,6 @@ class OvirtBackup():
             spinner = Spinner(Fore.RED + "waiting for delete snapshot... ")
             while self.snapshot_status(vm, snap_id=snapshot.id):
                 spinner.next()
-        except RequestError as err:
-            print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
-
-    def get_running_ovf(self, vm, desc):
-        """Get ovf info from snapshot"""
-        try:
-            self.snapshot = self.api.vms.get(vm).snapshots.list(
-                all_content=True, description=desc)[0]
-            self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
-            self.root = etree.fromstring(self.ovf)
-
-            with open(self.api.vms.get(vm).id + '.ovf', 'w') as ovfFile:
-                ovfFile.write(self.ovf)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(-1)
@@ -255,19 +244,98 @@ class OvirtBackup():
         for disk in disks:
             objects["Disks"].append(disk.id)
 
-        old_name = vm.split("-")
-        # print("Disk {} ID: {}".format(disk.name, disk.id))
-
-        # print("VM {} ID: {}".format(vm.name, vm.id))
-        # print(objects)
-
-        #self.create_dirs(vm_name=vm.name, export_path=export_path, images=images, vms=vms)
+        old_name = vm.split("-")[0]
 
         for disk in objects["Disks"]:
-            self.mv_data(old_name[0], export_path, disk, images, storage_id.id)
+            self.mv_data(old_name, export_path, disk, images, storage_id.id)
 
         for vm_iter in objects["Vms"]:
-            self.mv_data(old_name[0], export_path, vm_iter, vms, storage_id.id)
+            self.mv_data(old_name, export_path, vm_iter, vms, storage_id.id)
+
+# Seccion funciones modificacion del xml
+
+    def get_running_ovf(self, vm, desc, path):
+        """Get ovf info from snapshot"""
+        try:
+            self.snapshot = self.api.vms.get(vm).snapshots.list(
+                all_content=True, description=desc)[0]
+            self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
+            self.root = etree.fromstring(self.ovf)
+            complete_path = path + vm
+            ovf_path = os.path.join(complete_path, "running-" +  self.api.vms.get(vm).id + '.ovf')
+            with open(ovf_path, 'w') as ovfFile:
+                ovfFile.write(self.ovf)
+            return ovf_path
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
+            exit(-1)
+
+    def get_vm_export_xml(self, xml_export):
+        xml_tag = xml_export.getElementsByTagName("rasd:StorageId")
+        storage_ids = list()
+        for storage_id in xml_tag:
+            storage_ids.append(storage_id.firstChild.nodeValue)
+        return storage_ids
+
+    def add_storage_id_xml(self, xml_original, xml_export):
+        xml_doc = minidom.parse(xml_original)
+        xml_export_obj = minidom.parse(xml_export)
+
+        count = 0
+
+        for item in xml_doc.getElementsByTagName("Device"):
+            if item.firstChild.nodeValue == "disk":
+                st_id = self.get_vm_export_xml(xml_export_obj)
+                StorageId = xml_doc.createElement("rasd:StorageId")
+                content = xml_doc.createTextNode(st_id[count])
+                StorageId.appendChild(content)
+                parent = item.parentNode
+                parent.appendChild(StorageId)
+                count += 1
+        return xml_doc
+
+    def save_new_ovf(self, path, name, xml):
+        try:
+            dir = os.path.splitext(name)[0]
+            os.mkdir(path + dir)
+            save_name = path + dir + "/" + name
+            print(save_name)
+            with open(save_name, 'a') as new_ovf_file:
+                new_ovf_file.write(xml.toxml())
+        except OSError as e:
+            print(e)
+
+    def export_xml_path(self, path, vm, find_path=None):
+        if find_path is not None:
+            complete_path = path + vm + find_path
+        else:
+            complete_path = path + vm
+        for root, dirs, filename in os.walk(complete_path):
+            for name in filename:
+                if fnmatch.fnmatch(name, "*.ovf"):
+                    return os.path.join(root, name)
+
+    def change_owner(self, path):
+        uid = 56
+        gid = 56
+        for root, dirs, files in os.walk(path):
+            for one_dir in dirs:
+                os.chown(os.path.join(root, one_dir), uid, gid)
+            for one_file in files:
+                os.chown(os.path.join(root, one_file), uid, gid)
+
+
+"""
+    def save_new_ovf(self, vm, description, path_export):
+        self.path_running = self.get_running_ovf(vm=vm, desc=description, path=path_export)
+        self.real_name = self.path_running.split("/")[3]
+        self.path_export_xml = path_export + vm + "master/vms"
+        self.xml = self.add_line_storage_xml(self.real_name[8:], )
+
+        with open( ovf_path, 'a') as new_file:
+            new_file.write(xml.toxml())
+"""
+
 
 
 if __name__ == '__main__':
