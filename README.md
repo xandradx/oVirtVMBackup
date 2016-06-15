@@ -1,7 +1,7 @@
 # OvirtVMBackup
 Scripts for backup VM with Ovirt API
 
-Algorithm
+Procedure
 
 1. Generate Snapshot to a VM
 2. Clone VM from snapshot
