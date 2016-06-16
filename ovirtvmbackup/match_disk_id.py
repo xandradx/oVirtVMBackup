@@ -10,7 +10,7 @@ path_images="/exportdomain/Web01/images/"
 
 def rename_clone(path_ovf_old, path_ovf_final, path):
     xml_doc_old = minidom.parse(path_ovf_old)
-    xml_doc_final = minidom.parse(file_name_final)
+    xml_doc_final = minidom.parse(path_ovf_final)
     
     disks_old = xml_doc_old.getElementsByTagName('Disk')
     disks_final = xml_doc_final.getElementsByTagName('Disk')
