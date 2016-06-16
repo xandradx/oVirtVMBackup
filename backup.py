@@ -20,8 +20,6 @@ def get_args():
 
     parser.add_argument('-v', '--version',
                         action='version', version='%(prog)s 0.3')
-    parser.add_argument('--import', action="store_true", dest="imp",
-                        help="import virtual machine")
     parser.add_argument('--export', help="export virtual machine",
                         action="store_true")
     parser.add_argument('vmname')
@@ -37,7 +35,7 @@ def get_args():
 
     args = parser.parse_args()
 
-    return args.imp, args.export, args.vmname, args.manager, args.username, args.password, args.export_name
+    return args.export, args.vmname, args.manager, args.username, args.password, args.export_name
 
 
 def export(conn, vm_name, new_name, description, export_domain):
@@ -92,24 +90,18 @@ def vm_import(name):
 
 
 def main():
-    is_import, is_export, name, manager, user, password , export_domain = get_args()
+    is_export, name, manager, user, password , export_domain = get_args()
     new_name = name + "-snap"
     description = "oVirtBackup"
     url = "https://" + manager
-    if (is_import is not True) and (is_export is not True):
-        print(Fore.RED + "Export/Import option is necesary")
-        exit(1)
-    if (is_import) and (is_export):
-        print(Fore.RED + "Export or Import NOT must be combined")
+    if is_export is not True:
+        print(Fore.RED + "Export option is necesary")
         exit(1)
     else:
         oVirt = OvirtBackup(url, user, password)
         print(Fore.YELLOW + "trying auth...")
         if (oVirt.connect()):
             print(Fore.GREEN + "auth OK")
-        if (is_import):
-            vm_import(name)
-        elif (is_export):
             export(
                 conn=oVirt, vm_name=name, new_name=new_name,
                 description=description, export_domain=export_domain
