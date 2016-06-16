@@ -64,6 +64,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
             # trabajado con ovf's
+            print(Fore.YELLOW + "Change id's and paths")
             conn.get_running_ovf(vm=vm_name, desc=description, path=path_export)
             export_xml = conn.export_xml_path(path=path_export, vm=vm_name, find_path=vms_path)
             original_xml = conn.export_xml_path(path=path_export, vm=vm_name)
@@ -73,12 +74,14 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.save_new_ovf(path=vms_path_save, name=ovf_final, xml=xml_obj)
             conn.delete_tmp_ovf(path=path_export + vm_name + "/running-" + ovf_final)
             rename_clone(export_xml, vms_path_save + ovf_final, path_export + vm_name + images_path)
+            print(Fore.GREEN + "Move successful")
+            print(Fore.YELLOW + "Remove snap and Virtual Machine")
             # Eliminando snapshot y {vm}-snap
             conn.delete_snap(vm=vm_name, desc=description)
             conn.delete_tmp_vm(new_name=new_name)
             #  cambiando permisos
+            print(Fore.YELLOW + "Applying permissions")
             conn.change_owner(path=path_export + vm_name)
-            print(Fore.GREEN + "\nMove successful")
             print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
