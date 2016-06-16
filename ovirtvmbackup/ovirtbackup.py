@@ -330,19 +330,5 @@ class OvirtBackup():
             for one_file in files:
                 os.chown(os.path.join(root, one_file), uid, gid)
 
-
-"""
-    def save_new_ovf(self, vm, description, path_export):
-        self.path_running = self.get_running_ovf(vm=vm, desc=description, path=path_export)
-        self.real_name = self.path_running.split("/")[3]
-        self.path_export_xml = path_export + vm + "master/vms"
-        self.xml = self.add_line_storage_xml(self.real_name[8:], )
-
-        with open( ovf_path, 'a') as new_file:
-            new_file.write(xml.toxml())
-"""
-
-
-
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
