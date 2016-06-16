@@ -7,6 +7,7 @@ file_name_old = "/exportdomain/Web01/master/vms/67ebbd18-01c5-4434-b1ae-928ef33b
 file_name_final = "/exportdomain/Web01/master/vms/a583ffd9-3a88-4347-b9b2-5bbce28414f7/a583ffd9-3a88-4347-b9b2-5bbce28414f7.ovf"
 path_images="/exportdomain/Web01/images/"
 
+
 def rename_clone(path_ovf_old, path_ovf_final, path):
     xml_doc_old = minidom.parse(path_ovf_old)
     xml_doc_final = minidom.parse(file_name_final)
