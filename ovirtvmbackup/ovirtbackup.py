@@ -322,8 +322,8 @@ class OvirtBackup():
                     return os.path.join(root, name)
 
     def change_owner(self, path):
-        uid = 56
-        gid = 56
+        uid = 36
+        gid = 36
         for root, dirs, files in os.walk(path):
             for one_dir in dirs:
                 os.chown(os.path.join(root, one_dir), uid, gid)

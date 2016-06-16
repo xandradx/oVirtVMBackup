@@ -3,9 +3,9 @@ from xml.dom import minidom
 import os, shutil
 
 
-file_name_old = "/exportdomain/Web01/master/vms/67ebbd18-01c5-4434-b1ae-928ef33be56e/67ebbd18-01c5-4434-b1ae-928ef33be56e.ovf"
-file_name_final = "/exportdomain/Web01/master/vms/a583ffd9-3a88-4347-b9b2-5bbce28414f7/a583ffd9-3a88-4347-b9b2-5bbce28414f7.ovf"
-path_images="/exportdomain/Web01/images/"
+#file_name_old = "/exportdomain/Web01/master/vms/67ebbd18-01c5-4434-b1ae-928ef33be56e/67ebbd18-01c5-4434-b1ae-928ef33be56e.ovf"
+#file_name_final = "/exportdomain/Web01/master/vms/a583ffd9-3a88-4347-b9b2-5bbce28414f7/a583ffd9-3a88-4347-b9b2-5bbce28414f7.ovf"
+#path_images="/exportdomain/Web01/images/"
 
 
 def rename_clone(path_ovf_old, path_ovf_final, path):
@@ -26,7 +26,7 @@ def rename_clone(path_ovf_old, path_ovf_final, path):
         directory_dst = os.path.join(path, directory_dst_name)
         # creando directorios nuevos
         os.mkdir(directory_dst)
-        print("DIR from {} to {}".format(directory_src, directory_dst))
+      #  print("DIR from {} to {}".format(directory_src, directory_dst))
         # separando archivo del disco del value ovf:fileRef
         file_src = os.path.basename(old_xml)
         file_dst = os.path.basename(final_xml)
@@ -34,18 +34,18 @@ def rename_clone(path_ovf_old, path_ovf_final, path):
         old_file = os.path.join(path, directory_src_name, file_src)
         final_file = os.path.join(path, directory_dst_name, file_dst)
         # moviendo los archivos de disco
-        print("FILE from {} to {}".format(old_file, final_file))
+      #  print("FILE from {} to {}".format(old_file, final_file))
         shutil.move(old_file, final_file)
         # creando los path de META files
         old_file_meta = old_file + ".meta"
         final_file_meta = final_file + ".meta"
         # moviendo los archivos META 
-        print("META from {} to {}".format(old_file + ".meta", final_file + ".meta"))
+      #  print("META from {} to {}".format(old_file + ".meta", final_file + ".meta"))
         shutil.move(old_file_meta, final_file_meta)
         #print("from {} to {}".format(path + file_src, path + file_dst))
         shutil.rmtree(directory_src)
-        print("***********")
+      #  print("***********")
     shutil.rmtree(os.path.dirname(path_ovf_old))
 
-rename_clone(file_name_old, file_name_final, path_images)
+#rename_clone(file_name_old, file_name_final, path_images)
 
