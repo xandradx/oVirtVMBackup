@@ -61,6 +61,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.export_vm(new_name, export_dom)
             print(Fore.GREEN + "\nExport Virtual Machine {} successful".format(export_domain))
             print(Fore.YELLOW + "Moving export to another location")
+            conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
             # trabajado con ovf's
             conn.get_running_ovf(vm=vm_name, desc=description, path=path_export)
