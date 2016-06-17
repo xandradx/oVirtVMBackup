@@ -3,7 +3,6 @@ import os
 from ovirtvmbackup import OvirtBackup, rename_clone
 from colorama import init, Fore
 import argparse
-from time import sleep
 
 init(autoreset=True)
 
