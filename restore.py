@@ -16,13 +16,13 @@ def args():
     virtual_machine = options.vm
     return export_domain, virtual_machine
 
-def restore():
-    pass
+def restore(export_name, vm_name):
+    print(export_name)
+    print(vm_name)
 
 def main():
     export, virtual_machine = args()
-    print(export)
-    print(virtual_machine)
+    restore(export_name=export, vm_name=virtual_machine)
 
 if __name__ == '__main__':
     main()
