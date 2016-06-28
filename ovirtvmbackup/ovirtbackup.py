@@ -205,18 +205,18 @@ class OvirtBackup():
         self.detach_export(dc_id, name_export)
 
     def active_export(self, vm, export_name):
-        export_attached = self.get_export_domain(vm)
+        self.export_attached = self.get_export_domain(vm)
         dc = self.get_dc(vm)
-        if export_attached is not None:
-            status_export = self.verify_valid_export(dc.id, export_name, export_attached.name)
+        if self.export_attached is not None:
+            status_export = self.verify_valid_export(dc.id, export_name, self.export_attached.name)
             if status_export == 1:
                 print("Export {} is OK".format(export_name))
             elif status_export == 0:
-                self.prepare_export(dc.id, vm, export_attached.name)
+                self.prepare_export(dc.id, vm, self.export_attached.name)
                 self.attach_export(dc.id, export_name)
             elif status_export == 2:
                 self.do_export_up(dc.id, export_name)
-        elif export_attached is None:
+        elif self.export_attached is None:
             self.attach_export(dc.id, export_name)
 
 # Seccion de funciones para movimiento de archivos
