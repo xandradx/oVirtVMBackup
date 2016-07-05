@@ -7,7 +7,8 @@ from xml.dom import minidom
 
 def args():
     p = configargparse.ArgParser(
-        default_config_files=['/etc/restore.cfg']
+        default_config_files=['/etc/restore.cfg'],
+        version='1.0'
     )
     p.add_argument('-c', '--config', is_config_file=True, help='config file path')
     p.add_argument('-e', '--export-domain', required=True, help='name of export domain')
@@ -30,6 +31,10 @@ def ovf_get(vm_path):
         for file in files:
             if file.endswith(".ovf"):
                 return os.path.join(root, file), root
+
+# def import_action():
+#    ovirt = OvirtBackup()
+#    ovirt.connect()
 
 
 def parse_xml(xml_path):
