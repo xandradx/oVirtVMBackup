@@ -12,13 +12,17 @@ def args():
     p.add_argument('-c', '--config', is_config_file=True, help='config file path')
     p.add_argument('-e', '--export-domain', required=True, help='name of export domain')
     p.add_argument('-P', '--path-export', required=True, help='path of export domain')
+    p.add_argument('-i', help='import into RHEV', action='store_true', dest='import_option')
+    p.add_argument('-d', help='dry run', action='store_true', dest='dry')
     p.add_argument('vm', help='name of virtual machine')
 
     options = p.parse_args()
     export_domain = options.export_domain
     virtual_machine = options.vm
     export_path = options.path_export
-    return export_domain, export_path, virtual_machine
+    import_option = options.import_option
+    dry = options.dry
+    return export_domain, export_path, virtual_machine, import_option, dry
 
 
 def ovf_get(vm_path):
@@ -61,9 +65,17 @@ def restore(export_name, path, vm_name):
 
 
 def main():
-    export, path, virtual_machine = args()
-    restore(export_name=export, path=path, vm_name=virtual_machine)
-
+    export, path, virtual_machine, import_action, dry_run = args()
+    if (dry_run):
+        if (import_action):
+            print("Only test functionality with import")
+        else:
+            print("Only test functionality without import")
+    else:
+        if (import_action):
+            restore(export_name=export, path=path, vm_name=virtual_machine)
+        else:
+            print("without import")
 
 if __name__ == '__main__':
     main()
