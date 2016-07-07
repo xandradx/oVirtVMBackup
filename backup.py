@@ -82,6 +82,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             print(Fore.GREEN + "process finished successful")
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
+        exit(1)
 
 def vm_import(name):
     print("Import virtual machine {}".format(name))
