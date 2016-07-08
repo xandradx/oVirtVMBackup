@@ -9,6 +9,7 @@ from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
 from colorama import Fore
 import os
+import time
 
 from xml.dom import minidom
 
@@ -33,7 +34,7 @@ class OvirtBackup():
             return self.api
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(0)
+            exit(1)
 
     def create_snap(self, desc, vm):
         """Create a snapshot from a virtual machine with params:
@@ -51,7 +52,7 @@ class OvirtBackup():
             self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
+            exit(1)
 
     def snapshot_status(self, vm, snap_id):
         snapshot = self.api.vms.get(vm).snapshots.get(id=snap_id)
@@ -89,7 +90,7 @@ class OvirtBackup():
                 spinner.next()
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
+            exit(1)
 
     def create_vm_to_export(self, vm, new_name, desc):
         try:
@@ -103,7 +104,7 @@ class OvirtBackup():
             self.__wait(new_name, 0)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(0)
+            exit(1)
 
     def get_storage_domains(self,vm):
         self.datacenter = self.get_dc(vm)
@@ -205,18 +206,18 @@ class OvirtBackup():
         self.detach_export(dc_id, name_export)
 
     def active_export(self, vm, export_name):
-        export_attached = self.get_export_domain(vm)
+        self.export_attached = self.get_export_domain(vm)
         dc = self.get_dc(vm)
-        if export_attached is not None:
-            status_export = self.verify_valid_export(dc.id, export_name, export_attached.name)
+        if self.export_attached is not None:
+            status_export = self.verify_valid_export(dc.id, export_name, self.export_attached.name)
             if status_export == 1:
                 print("Export {} is OK".format(export_name))
             elif status_export == 0:
-                self.prepare_export(dc.id, vm, export_attached.name)
+                self.prepare_export(dc.id, vm, self.export_attached.name)
                 self.attach_export(dc.id, export_name)
             elif status_export == 2:
                 self.do_export_up(dc.id, export_name)
-        elif export_attached is None:
+        elif self.export_attached is None:
             self.attach_export(dc.id, export_name)
 
 # Seccion de funciones para movimiento de archivos
@@ -227,6 +228,7 @@ class OvirtBackup():
             os.makedirs(export_path + vm_name + images)
         except OSError as e:
             print(e)
+            exit(1)
 
     def mv_data(self, new_name, export, source, destination, stid):
             self.dest = export + new_name + destination
@@ -268,7 +270,7 @@ class OvirtBackup():
             return ovf_path
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(-1)
+            exit(1)
 
     def get_vm_export_xml(self, xml_export):
         xml_tag = xml_export.getElementsByTagName("rasd:StorageId")
@@ -299,7 +301,6 @@ class OvirtBackup():
             dir = os.path.splitext(name)[0]
             os.mkdir(path + dir)
             save_name = path + dir + "/" + name
-            print(save_name)
             with open(save_name, 'a') as new_ovf_file:
                 new_ovf_file.write(xml.toxml())
         except OSError as e:
@@ -329,6 +330,10 @@ class OvirtBackup():
                 os.chown(os.path.join(root, one_dir), uid, gid)
             for one_file in files:
                 os.chown(os.path.join(root, one_file), uid, gid)
+
+    def log_event(self, vm,msg,severity):
+        vm_obj=self.api.vms.get(vm)
+        self.api.events.add(params.Event(vm=vm_obj,origin='vm-backup',description=msg,severity=severity,custom_id=int(time.time())))
 
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
