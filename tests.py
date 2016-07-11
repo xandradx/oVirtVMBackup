@@ -24,3 +24,6 @@ for st in STORAGE_DOMAINS:
 
 print(ovirt.api.datacenters.get(id=DATACENTER.id).storagedomains.get(
                 EXPORT_NAME).get_status().get_state())
+
+
+print(ovirt.vm_state('TSMProxy'))
