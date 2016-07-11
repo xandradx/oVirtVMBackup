@@ -32,11 +32,6 @@ def ovf_get(vm_path):
             if file.endswith(".ovf"):
                 return os.path.join(root, file), root
 
-# def import_action():
-#    ovirt = OvirtBackup()
-#    ovirt.connect()
-
-
 def parse_xml(xml_path):
     xml_ovf = minidom.parse(xml_path)
     disks = xml_ovf.getElementsByTagName('Disk')
