@@ -9,6 +9,7 @@ from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
 from colorama import Fore
 import os
+import time
 
 from xml.dom import minidom
 
@@ -336,6 +337,10 @@ class OvirtBackup():
                 os.chown(os.path.join(root, one_dir), uid, gid)
             for one_file in files:
                 os.chown(os.path.join(root, one_file), uid, gid)
+
+    def log_event(self, vm,msg,severity):
+        vm_obj=self.api.vms.get(vm)
+        self.api.events.add(params.Event(vm=vm_obj,origin='vm-backup',description=msg,severity=severity,custom_id=int(time.time())))
 
 if __name__ == '__main__':
     print("This file is intended to be used as a library of functions and it's not expected to be executed directly")
