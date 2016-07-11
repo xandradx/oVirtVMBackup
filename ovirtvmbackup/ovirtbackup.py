@@ -213,7 +213,7 @@ class OvirtBackup():
         if self.export_attached is not None:
             status_export = self.verify_valid_export(dc.id, export_name, self.export_attached.name)
             if status_export == 1:
-                print("Export {} is OK".format(export_name))
+                print(Fore.GREEN + "Export {} is OK".format(export_name))
             elif status_export == 0:
                 self.prepare_export(dc.id, vm, self.export_attached.name)
                 self.attach_export(dc.id, export_name)
