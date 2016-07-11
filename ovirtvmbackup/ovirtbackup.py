@@ -35,6 +35,9 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(1)
 
+    def vm_state(self, vm):
+        return self.api.vms.get(vm).get_status().get_state()
+
     def create_snap(self, desc, vm):
         """Create a snapshot from a virtual machine with params:
             @param desc: Description of Snapshot
@@ -245,7 +248,10 @@ class OvirtBackup():
         for disk in disks:
             objects["Disks"].append(disk.id)
 
-        old_name = vm.split("-")[0]
+        if "-" in vm:
+            old_name = vm.split("-")[0]
+        elif not "-" in vm:
+            old_name = vm
 
         for disk in objects["Disks"]:
             self.mv_data(old_name, export_path, disk, images, storage_id.id)
