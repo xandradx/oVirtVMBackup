@@ -44,7 +44,8 @@ def export(conn, vm_name, new_name, description, export_domain):
         if (conn.if_exists_vm(vm=new_name)):
             print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
         else:
-            if conn.vm_state(vm=vm_name) == 'up':
+            status = conn.vm_state(vm=vm_name)
+            if  status == 'up':
                 print(Fore.YELLOW + "creating snapshot")
                 conn.create_snap(desc=description, vm=vm_name)
                 print(Fore.GREEN + "\ncreate snapshot successful")
@@ -78,7 +79,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 conn.delete_snap(vm=vm_name, desc=description)
                 conn.delete_tmp_vm(new_name=new_name)
                 print(Fore.GREEN + "process finished successful")
-            elif conn.vm_state(vm=vm_name) == 'down':
+            elif status == 'down':
                 print(Fore.GREEN + "Virtual Machine {} is down".format(vm_name))
                 print(Fore.YELLOW + "Activating Export Domain {}".format(export_domain))
                 conn.active_export(vm=vm_name, export_name=export_domain)
@@ -93,7 +94,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 print(Fore.GREEN + "Move successful")
                 print(Fore.GREEN + "process finished successful")
             else:
-                print(Fore.RED + "Virtual Machine {} status is {}".format(vm_name, conn.vm_state(vm=vm_name)))
+                print(Fore.RED + "Virtual Machine {} status is {}".format(vm_name, status))
                 exit(1)
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
