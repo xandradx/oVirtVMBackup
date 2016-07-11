@@ -17,6 +17,8 @@ Procedure
 * Script for Backup VM in RHEV/Ovirt
 * Version 0.1
 
-lperez@i-t-m.com
+&copy; Luis Armando Perez Marin   
+<luis.luimarin@gmail.com>   
+<lperez@i-t-m.com>
 
-luis.luimarin@gmail.com
+
