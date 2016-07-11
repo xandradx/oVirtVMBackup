@@ -248,6 +248,7 @@ class OvirtBackup():
         for disk in disks:
             objects["Disks"].append(disk.id)
 
+        old_name = ''
         if "-" in vm:
             old_name = vm.split("-")[0]
         elif not "-" in vm:
