@@ -39,13 +39,13 @@ def get_args():
 
 def export(conn, vm_name, new_name, description, export_domain):
     print(Fore.GREEN + "Export virtual machine {}".format(vm_name))
-
     if (conn.if_exists_vm(vm=vm_name)):
-        if (conn.if_exists_vm(vm=new_name)):
-            print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
-        else:
-            status = conn.vm_state(vm=vm_name)
-            if  status == 'up':
+        status = conn.vm_state(vm=vm_name)
+        if status == 'up':
+            if (conn.if_exists_vm(vm=new_name)):
+                print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
+                exit(1)
+            else:
                 print(Fore.YELLOW + "creating snapshot")
                 conn.create_snap(desc=description, vm=vm_name)
                 print(Fore.GREEN + "\ncreate snapshot successful")
@@ -79,23 +79,23 @@ def export(conn, vm_name, new_name, description, export_domain):
                 conn.delete_snap(vm=vm_name, desc=description)
                 conn.delete_tmp_vm(new_name=new_name)
                 print(Fore.GREEN + "process finished successful")
-            elif status == 'down':
-                print(Fore.GREEN + "Virtual Machine {} is down".format(vm_name))
-                print(Fore.YELLOW + "Activating Export Domain {}".format(export_domain))
-                conn.active_export(vm=vm_name, export_name=export_domain)
-                print(Fore.GREEN + "Export domain {} successful activated".format(export_domain))
-                print(Fore.YELLOW + "Export Virtual Machine {}".format(vm_name))
-                export_dom = conn.get_export_domain(vm=vm_name)
-                conn.export_vm(vm_name, export_dom)
-                print(Fore.GREEN + "\nExport Virtual Machine {} successful".format(vm_name))
-                print(Fore.YELLOW + "Moving export to another location")
-                conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
-                conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
-                print(Fore.GREEN + "Move successful")
-                print(Fore.GREEN + "process finished successful")
-            else:
-                print(Fore.RED + "Virtual Machine {} status is {}".format(vm_name, status))
-                exit(1)
+        elif status == 'down':
+            print(Fore.GREEN + "Virtual Machine {} is down".format(vm_name))
+            print(Fore.YELLOW + "Activating Export Domain {}".format(export_domain))
+            conn.active_export(vm=vm_name, export_name=export_domain)
+            print(Fore.GREEN + "Export domain {} successful activated".format(export_domain))
+            print(Fore.YELLOW + "Export Virtual Machine {}".format(vm_name))
+            export_dom = conn.get_export_domain(vm=vm_name)
+            conn.export_vm(vm_name, export_dom)
+            print(Fore.GREEN + "\nExport Virtual Machine {} successful".format(vm_name))
+            print(Fore.YELLOW + "Moving export to another location")
+            conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
+            conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
+            print(Fore.GREEN + "Move successful")
+            print(Fore.GREEN + "process finished successful")
+        else:
+            print(Fore.RED + "Virtual Machine {} status is {}".format(vm_name, status))
+            exit(1)
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
         exit(1)
