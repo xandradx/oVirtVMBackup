@@ -85,8 +85,9 @@ def change_meta(path):
             if file.endswith(".meta"):
                 subprocess.call(['sed','-i','s/^IMAGE=.*/IMAGE='+image_id+'/g',path+image_id+'/'+file])    
 
-def upload_tsm(path):
-    command=subprocess.check_call(['sudo','dsmc','selective',path,'-subdir=yes'],cwd='/tmp') 
+def upload_tsm(path,vmname):
+    date=time.strftime("%m/%d/%y", time.gmtime())
+    command=subprocess.check_call(['sudo','dsmc','archive',path+'/','-subdir=yes','-description="VMDate: '+date+' VMName:'+vmname+'"'],cwd='/tmp') 
     return command
 
 def remove_temp(path):
@@ -133,13 +134,14 @@ def main():
 	exit(2)
     try:
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM','normal')
-        upload_tsm(path_export+vmname)
+        upload_tsm(path_export+vmname,vmname)
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has been completed','normal')
-    except:
-        oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed','error')
+    except subprocess.CalledProcessError as e:
         date=time.strftime('%Y-%m-%d-%H%M%S',time.localtime())
         tempdir=path_export+vmname+'-'+date
         os.rename(path_export+vmname,tempdir)
+        oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed with error code: '+str(e.returncode),'error')
+        print e
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed and moved to '+tempdir,'error')
 	exit(3)
     try:
