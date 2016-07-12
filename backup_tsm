@@ -17,14 +17,14 @@ vms_path = "/master/vms/"
 images_path = "/images/"
 
 def export(conn, vm_name, new_name, description, export_domain):
-    conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
     print(Fore.GREEN + "Export virtual machine {}".format(vm_name))
 
     if (conn.if_exists_vm(vm=vm_name)):
+    	conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
         if (conn.if_exists_vm(vm=new_name)):
             print(Fore.RED + "Virtual Machine {} Backup already exists".format(new_name))
-            conn.log_event(vm_name,'Backup VM \''+vm_name+'\' Failed, '+new_name+' already exist','error')
-            print "HOLA"
+            conn.log_event(vm_name,'Backup VM \''+vm_name+'\' Failed, '+new_name+' already exist, you must delete \''+new_name+'\' manually' ,'error')
+	    exit(1)
         else:
             print(Fore.YELLOW + "creating snapshot")
             conn.create_snap(desc=description, vm=vm_name)
@@ -122,20 +122,31 @@ def main():
         description=description, export_domain=general['export']
         )
     except:
-        oVirt.log_event(vmname,'Backup VM \''+vmname+'\' Failed','error')
-    oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','normal')
-    change_meta(path_export+vmname+images_path)
-    oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM','normal')
+	if (oVirt.if_exists_vm(vm=vmname)):
+            oVirt.log_event(vmname,'Backup VM \''+vmname+'\' Failed','error')
+	exit(1)
     try:
+        oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','normal')
+        change_meta(path_export+vmname+images_path)
+    except:
+        oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','error')
+	exit(2)
+    try:
+        oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM','normal')
         upload_tsm(path_export+vmname)
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has been completed','normal')
-        remove_temp(path_export+vmname)
     except:
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed','error')
         date=time.strftime('%Y-%m-%d-%H%M%S',time.localtime())
         tempdir=path_export+vmname+'-'+date
         os.rename(path_export+vmname,tempdir)
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed and moved to '+tempdir,'error')
+	exit(3)
+    try:
+        remove_temp(path_export+vmname)
+    except:
+	print("Couldn't delete %s" ) % ( path_export+vmname )
+	exit(4)
 
         
 
