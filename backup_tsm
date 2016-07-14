@@ -87,11 +87,20 @@ def change_meta(path):
 
 def upload_tsm(path,vmname):
     date=time.strftime("%m/%d/%y", time.gmtime())
-    command=subprocess.check_call(['sudo','dsmc','archive',path+'/','-subdir=yes','-description="VMDate: '+date+' VMName:'+vmname+'"'],cwd='/tmp') 
-    return command
+    output=[]
+    command=subprocess.check_output(['sudo','dsmc','archive',path+'/','-subdir=yes','-description=\'VMDate: '+date+' VMName:'+vmname+'\''],cwd='/tmp') 
+    for line in command.split('\n'):
+        output.append(line)
+    fi=output[len(output)-16].split(':',2)[1].replace(" ","")
+    fa=output[len(output)-15].split(':',2)[1].replace(" ","")
+    bi=output[len(output)-8].split(':',2)[1].replace(" ","")
+    ba=output[len(output)-9].split(':',2)[1].replace(" ","")
+    message=("Files: %s/%s Size: %s/%s") % (fa,fi,ba,bi)
+    return message
 
 def remove_temp(path):
     shutil.rmtree(path)
+
 
 def main():
     if ( len(sys.argv) != 2):
@@ -118,24 +127,33 @@ def main():
     oVirt.connect()
     try:
         print(Fore.GREEN + "auth OK")
+        log_file=open('/tmp/'+vmname+'.log','w')
+        log_file.write('KVM BACKUP: Starting full backup of virtual machine from '+general['manager']+' at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'\n')
         export(
         conn=oVirt, vm_name=vmname, new_name=new_name,
         description=description, export_domain=general['export']
         )
     except:
-	if (oVirt.if_exists_vm(vm=vmname)):
-            oVirt.log_event(vmname,'Backup VM \''+vmname+'\' Failed','error')
-	exit(1)
+        if (oVirt.if_exists_vm(vm=vmname)):
+                oVirt.log_event(vmname,'Backup VM \''+vmname+'\' Failed','error')
+        exit(1)
     try:
         oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','normal')
         change_meta(path_export+vmname+images_path)
     except:
         oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','error')
-	exit(2)
+        exit(2)
     try:
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM','normal')
-        upload_tsm(path_export+vmname,vmname)
-        oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has been completed','normal')
+        log_file.write('Backup for KVM started successfully at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'\n')
+        log_file.write('ACTIVITY_DETAILS=KVM Backup\n')
+        log_file.write('AS_ENTITY="'+os.uname()[1]+'"\n')
+        log_file.write('SUB_ENTITY="'+vmname+'"\n')
+        command=upload_tsm(path_export+vmname,vmname)
+        log_file.write('Backup for KVM finished at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'.\n')
+        oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has been completed '+command+'.','normal')
+        log_file.write('KVM BACKUP: full backup of virtual machine from server '+general['manager']+' completed successfully at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'.\n')
+        log_file.close()
     except subprocess.CalledProcessError as e:
         date=time.strftime('%Y-%m-%d-%H%M%S',time.localtime())
         tempdir=path_export+vmname+'-'+date
@@ -143,12 +161,13 @@ def main():
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed with error code: '+str(e.returncode),'error')
         print e
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed and moved to '+tempdir,'error')
-	exit(3)
+        exit(3)
     try:
         remove_temp(path_export+vmname)
+        #pass
     except:
-	print("Couldn't delete %s" ) % ( path_export+vmname )
-	exit(4)
+	    print("Couldn't delete %s" ) % ( path_export+vmname )
+	    exit(4)
 
         
 
