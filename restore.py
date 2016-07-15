@@ -1,4 +1,7 @@
 from __future__ import print_function
+
+from subprocess import check_call
+
 import configargparse
 import os, shutil
 
@@ -11,20 +14,18 @@ def args():
         version='1.0'
     )
     p.add_argument('-c', '--config', is_config_file=True, help='config file path')
-    p.add_argument('-e', '--export-domain', required=True, help='name of export domain')
-    p.add_argument('-P', '--path-export', required=True, help='path of export domain')
-    p.add_argument('-i', help='import into RHEV', action='store_true', dest='import_option')
-    p.add_argument('-d', help='dry run', action='store_true', dest='dry')
-    p.add_argument('vm', help='name of virtual machine')
+    p.add_argument('-P', '--path', help='path of export domain')
+    p.add_argument('dir', help='name of dir is TSM')
 
     options = p.parse_args()
-    export_domain = options.export_domain
-    virtual_machine = options.vm
-    export_path = options.path_export
-    import_option = options.import_option
-    dry = options.dry
-    return export_domain, export_path, virtual_machine, import_option, dry
+    virtual_machine = options.dir
+    export_path = options.path
+    return export_path, virtual_machine
 
+
+def get_tsm(path,directory):
+    dsmc = check_call(["sudo", "dsmc", "retrieve" + os.path.join(path, directory), "-subdir=yes"])
+    return dsmc
 
 def ovf_get(vm_path):
     for root, dirs, files in os.walk(vm_path):
@@ -49,11 +50,11 @@ def restore_imgs(disksg, imgs, export_imgs):
         shutil.move(disk_src, export_imgs)
 
 
-def restore(export_name, path, vm_name):
+def restore(path, directory):
     try:
         export_id = "e412a6d5-8d62-4df5-a71c-352c50287a55"
-        imgs = os.path.join(path, vm_name, "images")
-        vms = os.path.join(path, vm_name, "master", "vms")
+        imgs = os.path.join(path, directory, "images")
+        vms = os.path.join(path, directory, "master", "vms")
         export_imgs = os.path.join(path, export_id, "images")
         ovf, dir_vm = ovf_get(vms)
         disksg = parse_xml(ovf)
@@ -65,17 +66,11 @@ def restore(export_name, path, vm_name):
 
 
 def main():
-    export, path, virtual_machine, import_action, dry_run = args()
-    if (dry_run):
-        if (import_action):
-            print("Only test functionality with import")
-        else:
-            print("Only test functionality without import")
+    path, directory = args()
+    if not os.path.exists(path):
+        print("path {} doesn't exists".format(path))
     else:
-        if (import_action):
-            restore(export_name=export, path=path, vm_name=virtual_machine)
-        else:
-            print("without import")
+        restore(path=path, directory=directory)
 
 if __name__ == '__main__':
     main()
