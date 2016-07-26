@@ -2,6 +2,8 @@
 
 import os
 
+import datetime
+
 from ovirtvmbackup import OvirtBackup, rename_clone
 from colorama import init, Fore
 import sys
@@ -62,6 +64,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.delete_tmp_vm(new_name=new_name)
             print(Fore.GREEN + "process finished successful")
             conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
+            conn.change_dirname(path=path_export, vm=vm_name)
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
         exit(1)
@@ -113,7 +116,9 @@ def main():
     general=load_config(config_file)
     global path_export
     global dsmc
+    global timestamp
     path_export=general['exportpath']
+    timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
     dsmc=general['dsmc']
     vmname=sys.argv[1]
     new_name=vmname+'-snap'
@@ -149,7 +154,7 @@ def main():
         log_file.write('ACTIVITY_DETAILS=KVM Backup\n')
         log_file.write('AS_ENTITY="'+os.uname()[1]+'"\n')
         log_file.write('SUB_ENTITY="'+vmname+'"\n')
-        command=upload_tsm(path_export+vmname,vmname)
+        command=upload_tsm(path_export+vmname+"-"+timestamp,vmname)
         log_file.write('Backup for KVM finished at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'.\n')
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has been completed '+command+'.','normal')
         log_file.write('KVM BACKUP: full backup of virtual machine from server '+general['manager']+' completed successfully at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'.\n')
@@ -166,8 +171,8 @@ def main():
         remove_temp(path_export+vmname)
         #pass
     except:
-	    print("Couldn't delete %s" ) % ( path_export+vmname )
-	    exit(4)
+        print("Couldn't delete %s" ) % ( path_export+vmname )
+        exit(4)
 
         
 

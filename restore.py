@@ -72,6 +72,8 @@ def main():
     else:
         if (get_tsm(path=path, directory=directory) == 0):
             restore(path=path, directory=directory)
+        else:
+            exit(1)
 
 if __name__ == '__main__':
     main()

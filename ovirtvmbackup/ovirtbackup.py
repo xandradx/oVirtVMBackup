@@ -338,6 +338,16 @@ class OvirtBackup():
             for one_file in files:
                 os.chown(os.path.join(root, one_file), uid, gid)
 
+    def change_dirname(self, path, vm, timestamp):
+        try:
+            new_dir = os.path.join(path, vm + "-" + timestamp)
+            old_dir = os.path.join(path, vm)
+            #shutil.move(old_dir, new_dir)
+            os.rename(old_dir, new_dir)
+        except OSError as e:
+            print(e.errno)
+            return e.errno
+
     def log_event(self, vm,msg,severity):
         try:
             vm_obj=self.api.vms.get(vm)
