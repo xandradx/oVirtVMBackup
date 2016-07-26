@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from subprocess import check_call
+from subprocess import check_call, CalledProcessError
 
 import configargparse
 import os, shutil
@@ -18,13 +18,13 @@ def args():
     p.add_argument('dir', help='name of dir is TSM')
 
     options = p.parse_args()
-    virtual_machine = options.dir
+    directory = options.dir
     export_path = options.path
-    return export_path, virtual_machine
+    return export_path, directory
 
 
 def get_tsm(path,directory):
-    dsmc = check_call(["sudo", "dsmc", "retrieve" + os.path.join(path, directory), "-subdir=yes"])
+    dsmc = check_call(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
     return dsmc
 
 def ovf_get(vm_path):
@@ -70,7 +70,8 @@ def main():
     if not os.path.exists(path):
         print("path {} doesn't exists".format(path))
     else:
-        restore(path=path, directory=directory)
+        if (get_tsm(path=path, directory=directory) == 0):
+            restore(path=path, directory=directory)
 
 if __name__ == '__main__':
     main()
