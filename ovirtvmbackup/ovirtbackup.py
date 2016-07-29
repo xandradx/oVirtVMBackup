@@ -340,10 +340,10 @@ class OvirtBackup():
 
     def change_dirname(self, path, vm, timestamp):
         try:
-            new_dir = os.path.join(path, vm + "-" + timestamp)
-            old_dir = os.path.join(path, vm)
-            #shutil.move(old_dir, new_dir)
-            os.rename(old_dir, new_dir)
+         new_dir = os.path.join(path, vm + "-" + timestamp)
+         old_dir = os.path.join(path, vm)
+         print("cambiando de {} a {}".format(old_dir, new_dir))
+         shutil.move(old_dir, new_dir)
         except OSError as e:
             print(e.errno)
             return e.errno

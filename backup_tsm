@@ -62,9 +62,9 @@ def export(conn, vm_name, new_name, description, export_domain):
             # Eliminando snapshot y {vm}-snap
             conn.delete_snap(vm=vm_name, desc=description)
             conn.delete_tmp_vm(new_name=new_name)
+            conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
             print(Fore.GREEN + "process finished successful")
             conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
-            conn.change_dirname(path=path_export, vm=vm_name)
     else:
         print(Fore.RED + "Virtual Machine {} doesn't exists".format(vm_name))
         exit(1)
@@ -107,10 +107,10 @@ def remove_temp(path):
 
 def main():
     if ( len(sys.argv) != 2):
-      print ("Syntax: %s VMNAME") % (sys.argv[0] )
+      print("Syntax: {} VMNAME".format(sys.argv[0]))
       sys.exit(2)
     if not ( os.path.isfile(config_file) ):
-      print "No configuration file found"
+      print("No configuration file found")
       sys.exit(1)
     
     general=load_config(config_file)
@@ -124,8 +124,8 @@ def main():
     new_name=vmname+'-snap'
     description = "oVirtBackup"
     url = "https://" + general['manager']
-    print url
-    print description
+    print(url)
+    print(description)
     is_export=True
     oVirt = OvirtBackup(url, general['api_user'], general['api_pass'])
     print(Fore.YELLOW + "trying auth...")
@@ -168,10 +168,9 @@ def main():
         oVirt.log_event(vmname,'Uploading VM '+vmname+' to TSM has failed and moved to '+tempdir,'error')
         exit(3)
     try:
-        remove_temp(path_export+vmname)
-        #pass
+        remove_temp(path_export+vmname+"-"+timestamp)
     except:
-        print("Couldn't delete %s" ) % ( path_export+vmname )
+        print("Couldn't delete {}".format(path_export+vmname+"-"+timestamp) )
         exit(4)
 
         
