@@ -2,12 +2,14 @@ from __future__ import print_function
 
 import fnmatch
 import shutil
+
+import sys
+
+import itertools
 from lxml import etree
-from progress.spinner import Spinner
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
 from ovirtsdk.xml import params
-from colorama import Fore
 import os
 import time
 
@@ -66,9 +68,11 @@ class OvirtBackup():
 
     def __wait_snap(self, vm, id_snap):
         """ Time wait while create a snapshot of a Virtual Machine"""
-        spinner = Spinner(Fore.YELLOW + "waiting for snapshot to finish... ")
+        spinner = Spinner()
+        print("waiting for snapshot to finish... ")
         while self.api.vms.get(vm).snapshots.get(id=id_snap).snapshot_status != "ok":
-            spinner.next()
+            spinner.update()
+        spinner.clear()
 
     def __wait(self, vm, action):
         """Time wait while create and export of a Virtual Machine"""
@@ -76,9 +80,11 @@ class OvirtBackup():
             self.action = "creation"
         elif action == 1:
             self.action = "export"
-        spinner = Spinner(Fore.YELLOW + "waiting for vm {}... ".format(self.action))
+        spinner = Spinner()
+        print("waiting for vm {}... ".format(self.action))
         while self.get_vm_status(vm) != 'down':
-            spinner.next()
+            spinner.update()
+        spinner.clear()
 
     def delete_snap(self, desc, vm):
         """Delete a snapshot from a virtual machine with params:
@@ -88,9 +94,11 @@ class OvirtBackup():
         try:
             snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             snapshot.delete()
-            spinner = Spinner(Fore.RED + "waiting for delete snapshot... ")
+            spinner = Spinner()
+            print("waiting for delete snapshot... ")
             while self.snapshot_status(vm, snap_id=snapshot.id):
-                spinner.next()
+                spinner.update()
+            spinner.clear()
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(1)
@@ -186,10 +194,12 @@ class OvirtBackup():
 
     def do_export_maintenance(self, dc_id, export):
         self.api.datacenters.get(id=dc_id).storagedomains.get(export).deactivate()
-        spinner = Spinner("waiting for maintenance Storage... ")
+        spinner = Spinner()
+        print("waiting for maintenance Storage... ")
         while self.api.datacenters.get(id=dc_id).storagedomains.get(
                 export).get_status().get_state() != "maintenance":
-            spinner.next()
+            spinner.update()
+        spinner.clear()
 
     def attach_export(self, dc_id, export_ok):
         try:
@@ -354,6 +364,23 @@ class OvirtBackup():
             self.api.events.add(params.Event(vm=vm_obj,origin='vm-backup',description=msg,severity=severity,custom_id=int(time.time())))
         except:
             pass
+
+class Spinner():
+    """Class for implement Spinner in other process"""
+    def __init__(self):
+        self.spinner = itertools.cycle(['-', '/', '|', '\\'])
+
+    def update(self):
+        """Update the icon for spinner"""
+        sys.stdout.write(self.spinner.next())
+        sys.stdout.flush()
+        sys.stdout.write('\b')
+        time.sleep(0.3)
+
+    def clear(self):
+        sys.stdout.write("\033[?25h")
+        sys.stdout.flush()
+
 
 
 if __name__ == '__main__':
