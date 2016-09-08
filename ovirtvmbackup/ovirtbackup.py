@@ -51,8 +51,13 @@ class OvirtBackup():
             for snap in snapshot:
                 if snap.description == desc:
                     self.delete_snap(desc=desc, vm=vm)
-
-            self.api.vms.get(vm).snapshots.add(params.Snapshot(description=desc, vm=self.api.vms.get(vm)))
+            self.api.vms.get(vm).snapshots.add(
+                params.Snapshot(
+                    description=desc,
+                    vm=self.api.vms.get(vm),
+                    persist_memorystate=True
+                )
+            )
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
@@ -111,7 +116,11 @@ class OvirtBackup():
             self.api.vms.add(
                 params.VM(
                     name=new_name, snapshots=self.snapshots,
-                    cluster=self.cluster, template=self.api.templates.get(name="Blank")))
+                    cluster=self.cluster,
+                    template=self.api.templates.get(name="Blank"),
+                    delete_protected=False
+                )
+            )
             self.__wait(new_name, 0)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
@@ -352,7 +361,7 @@ class OvirtBackup():
         try:
          new_dir = os.path.join(path, vm + "-" + timestamp)
          old_dir = os.path.join(path, vm)
-         print("cambiando de {} a {}".format(old_dir, new_dir))
+         print("change from {} to {}".format(old_dir, new_dir))
          shutil.move(old_dir, new_dir)
         except OSError as e:
             print(e.errno)
