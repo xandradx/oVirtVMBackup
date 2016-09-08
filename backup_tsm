@@ -161,7 +161,7 @@ def main():
         exit(1)
     try:
         oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','normal')
-        change_meta(path_export+vmname+images_path)
+        change_meta(path_export+vmname+"-"+timestamp+images_path)
     except:
         oVirt.log_event(vmname,'Preparing VM '+vmname+' for TSM Backup','error')
         exit(2)
