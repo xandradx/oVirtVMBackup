@@ -59,8 +59,8 @@ def export(conn, vm_name, new_name, description, export_domain):
                 print("Move successful")
                 print("Remove snap and Virtual Machine")
                 # Eliminando snapshot y {vm}-snap
-                conn.delete_snap(vm=vm_name, desc=description)
                 conn.delete_tmp_vm(new_name=new_name)
+                conn.delete_snap(vm=vm_name, desc=description)
                 conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
                 print("process finished successful")
                 conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
@@ -78,7 +78,9 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             print("Move successful")
+            conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
             print("process finished successful")
+            conn.log_event(vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
         else:
             print("Virtual Machine {} status is {}".format(vm_name, status))
             exit(1)
