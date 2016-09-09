@@ -1,6 +1,7 @@
+#!/bin/env python
 from __future__ import print_function
 
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, CalledProcessError, check_output
 
 import configargparse
 import os, shutil
@@ -24,8 +25,11 @@ def args():
 
 
 def get_tsm(path,directory):
-    dsmc = check_call(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
-    return dsmc
+    try:
+        dsmc = check_output(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
+        return 0
+    except CalledProcessError as error:
+        return error.returncode
 
 def ovf_get(vm_path):
     for root, dirs, files in os.walk(vm_path):
@@ -70,9 +74,12 @@ def main():
     if not os.path.exists(path):
         print("path {} doesn't exists".format(path))
     else:
-        if (get_tsm(path=path, directory=directory) == 0):
+        print("Get {} from TSM".format(directory))
+        if get_tsm(path=path, directory=directory) == 0:
             restore(path=path, directory=directory)
+            shutil.rmtree(os.path.join(path, directory))
         else:
+            print("TSM not find {} backup".format(directory))
             exit(1)
 
 if __name__ == '__main__':
