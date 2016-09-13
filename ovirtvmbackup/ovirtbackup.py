@@ -367,12 +367,20 @@ class OvirtBackup():
             print(e.errno)
             return e.errno
 
-    def log_event(self, vm,msg,severity):
+    def log_event(self, vm, msg, severity):
         try:
             vm_obj=self.api.vms.get(vm)
             self.api.events.add(params.Event(vm=vm_obj,origin='vm-backup',description=msg,severity=severity,custom_id=int(time.time())))
         except:
             pass
+
+    def delete_local_folder(self, export_path, vm_name):
+        try:
+            path_to_delete = os.path.join(export_path, vm_name)
+            shutil.rmtree(path_to_delete)
+        except OSError as err:
+            self.log_event(vm=vm_name, msg=err.message, severity='error')
+            exit(1)
 
 class Spinner():
     """Class for implement Spinner in other process"""
