@@ -18,10 +18,12 @@ from xml.dom import minidom
 
 class OvirtBackup():
     """Class for export and import Virtual Machine in oVirt/RHEV environment"""
-    def __init__(self, url, user, password):
+    def __init__(self, url, user, password, virtual_machine=None, export_path=None):
         self.url = url
         self.user = user
         self.password = password
+        self.virtual = virtual_machine
+        self.export_path = export_path
 
     def print_info(self):
         print(self.url)
@@ -374,13 +376,39 @@ class OvirtBackup():
         except:
             pass
 
-    def delete_local_folder(self, export_path, vm_name):
+    def delete_local_folder(self, path):
         try:
-            path_to_delete = os.path.join(export_path, vm_name)
-            shutil.rmtree(path_to_delete)
+            shutil.rmtree(path)
         except OSError as err:
-            self.log_event(vm=vm_name, msg=err.message, severity='error')
+            self.log_event(vm=self.virtual, msg=err, severity='error')
             exit(1)
+
+    def verify_path(self, path):
+        try:
+            if os.path.isdir(path):
+                return 1
+            else:
+                return 0
+        except OSError as err:
+            return 0
+
+    def verify_environment(self, path, vm, export):
+        if self.verify_path(path=path):
+            path_backup = os.path.join(path, vm)
+            storage_list = list()
+            for storage in self.api.storagedomains.list():
+                storage_list.append(storage.name)
+            if export in storage_list:
+                if not self.verify_path(path=path_backup):
+                    return 1
+                else:
+                    self.delete_local_folder(path_backup)
+                    return 1
+            else:
+                return 0
+        else:
+            return 0
+
 
 class Spinner():
     """Class for implement Spinner in other process"""
