@@ -1,24 +1,23 @@
 from __future__ import print_function
 
 import fnmatch
+import itertools
+import os
 import re
 import shutil
-
 import sys
-
-import itertools
-from lxml import etree
-from ovirtsdk.api import API
-from ovirtsdk.infrastructure.errors import ConnectionError, RequestError
-from ovirtsdk.xml import params
-import os
 import time
-
 from xml.dom import minidom
 
+from lxml import etree
+from ovirtsdk.api import API
+from ovirtsdk.infrastructure.errors import RequestError
+from ovirtsdk.xml import params
 
-class OvirtBackup():
+
+class OvirtBackup:
     """Class for export and import Virtual Machine in oVirt/RHEV environment"""
+
     def __init__(self, url, user, password, virtual_machine=None, export_path=None):
         self.url = url
         self.user = user
@@ -129,7 +128,7 @@ class OvirtBackup():
             print("Error: {} Reason: {}".format(err.status, err.reason))
             exit(1)
 
-    def get_storage_domains(self,vm):
+    def get_storage_domains(self, vm):
         self.datacenter = self.get_dc(vm)
         return self.datacenter.storagedomains.list()
 
@@ -149,7 +148,7 @@ class OvirtBackup():
 
     def if_exists_vm(self, vm):
         """Verify if virtual machine and new virtual machine already exists"""
-        if (self.api.vms.get(vm)):
+        if self.api.vms.get(vm):
             return 1
         else:
             return 0
@@ -183,8 +182,8 @@ class OvirtBackup():
         if name in export_vms:
             self.api.storagedomains.get(export).vms.get(name).delete()
             print("delete successful")
-            
-# Funciones de manejo de Exports Domains
+
+        # Funciones de manejo de Exports Domains
 
     def get_export_domain(self, vm):
         """Return Export Domain
@@ -235,7 +234,7 @@ class OvirtBackup():
         if self.api.datacenters.get(id=dc_id).storagedomains.get(export).activate():
             print('Export Domain was activate successfully')
 
-    def prepare_export(self, dc_id, vm, name_export):
+    def prepare_export(self, dc_id, name_export):
         print("Different Export Attached")
         self.do_export_maintenance(dc_id, name_export)
         self.detach_export(dc_id, name_export)
@@ -248,14 +247,14 @@ class OvirtBackup():
             if status_export == 1:
                 print("Export {} is OK".format(export_name))
             elif status_export == 0:
-                self.prepare_export(dc.id, vm, self.export_attached.name)
+                self.prepare_export(dc.id, self.export_attached.name)
                 self.attach_export(dc.id, export_name)
             elif status_export == 2:
                 self.do_export_up(dc.id, export_name)
         elif self.export_attached is None:
             self.attach_export(dc.id, export_name)
 
-# Seccion de funciones para movimiento de archivos
+        # Seccion de funciones para movimiento de archivos
 
     def create_dirs(self, vm_name, export_path, images, vms):
         try:
@@ -266,9 +265,9 @@ class OvirtBackup():
             exit(1)
 
     def mv_data(self, new_name, export, source, destination, stid):
-            self.dest = export + new_name + destination
-            os.chdir(export + stid + destination)
-            shutil.move(source, self.dest)
+        self.dest = export + new_name + destination
+        os.chdir(export + stid + destination)
+        shutil.move(source, self.dest)
 
     def do_mv(self, vm, export_path, images, vms):
         obj_vm = self.api.vms.get(vm)
@@ -293,7 +292,7 @@ class OvirtBackup():
         for vm_iter in objects["Vms"]:
             self.mv_data(old_name, export_path, vm_iter, vms, storage_id.id)
 
-# Seccion funciones modificacion del xml
+        # Seccion funciones modificacion del xml
 
     def get_running_ovf(self, vm, desc, path):
         """Get ovf info from snapshot"""
@@ -303,7 +302,7 @@ class OvirtBackup():
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
             self.root = etree.fromstring(self.ovf)
             complete_path = path + vm
-            ovf_path = os.path.join(complete_path, "running-" +  self.api.vms.get(vm).id + '.ovf')
+            ovf_path = os.path.join(complete_path, "running-" + self.api.vms.get(vm).id + '.ovf')
             with open(ovf_path, 'w') as ovfFile:
                 ovfFile.write(self.ovf)
             return ovf_path
@@ -337,9 +336,9 @@ class OvirtBackup():
 
     def save_new_ovf(self, path, name, xml):
         try:
-            dir = os.path.splitext(name)[0]
-            os.mkdir(path + dir)
-            save_name = path + dir + "/" + name
+            directory = os.path.splitext(name)[0]
+            os.mkdir(path + directory)
+            save_name = path + directory + "/" + name
             with open(save_name, 'a') as new_ovf_file:
                 new_ovf_file.write(xml.toxml())
         except OSError as e:
@@ -372,18 +371,26 @@ class OvirtBackup():
 
     def change_dirname(self, path, vm, timestamp):
         try:
-         new_dir = os.path.join(path, vm + "-" + timestamp)
-         old_dir = os.path.join(path, vm)
-         print("change from {} to {}".format(old_dir, new_dir))
-         shutil.move(old_dir, new_dir)
+            new_dir = os.path.join(path, vm + "-" + timestamp)
+            old_dir = os.path.join(path, vm)
+            print("change from {} to {}".format(old_dir, new_dir))
+            shutil.move(old_dir, new_dir)
         except OSError as e:
             print(e.errno)
             return e.errno
 
     def log_event(self, vm, msg, severity):
         try:
-            vm_obj=self.api.vms.get(vm)
-            self.api.events.add(params.Event(vm=vm_obj,origin='vm-backup',description=msg,severity=severity,custom_id=int(time.time())))
+            vm_obj = self.api.vms.get(vm)
+            self.api.events.add(
+                params.Event(
+                    vm=vm_obj,
+                    origin='vm-backup',
+                    description=msg,
+                    severity=severity,
+                    custom_id=int(time.time())
+                )
+            )
         except:
             pass
 
@@ -403,7 +410,7 @@ class OvirtBackup():
                     folder = os.path.join(path, f)
                     if os.path.isdir(folder):
                         shutil.rmtree(folder)
-                        self.log_event(vm=vm, msg="delete old backup "+folder, severity='info')
+                        self.log_event(vm=vm, msg="delete old backup " + folder, severity='info')
             return 1
         except OSError as err:
             self.log_event(vm=self.virtual, msg=err, severity='error')
@@ -434,7 +441,7 @@ class OvirtBackup():
                 else:
                     print("Verify exists old backup {}*: [ FAIL ]".format(vm))
                     if self.clean_dir(path=path, vm=vm):
-#                    if self.delete_local_folder(path_backup):
+                        #                    if self.delete_local_folder(path_backup):
                         print("Delete old backup {}*: [ OK ]".format(vm))
                         print("All checks: [ OK ]")
                         return 1
@@ -449,8 +456,9 @@ class OvirtBackup():
             return 0
 
 
-class Spinner():
+class Spinner:
     """Class for implement Spinner in other process"""
+
     def __init__(self):
         self.spinner = itertools.cycle(['-', '/', '|', '\\'])
 
@@ -464,7 +472,6 @@ class Spinner():
     def clear(self):
         sys.stdout.write("\033[?25h")
         sys.stdout.flush()
-
 
 
 if __name__ == '__main__':
