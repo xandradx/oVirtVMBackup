@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import fnmatch
+import re
 import shutil
 
 import sys
@@ -379,9 +380,24 @@ class OvirtBackup():
     def delete_local_folder(self, path):
         try:
             shutil.rmtree(path)
+            return 1
         except OSError as err:
             self.log_event(vm=self.virtual, msg=err, severity='error')
-            exit(1)
+            return 0
+
+    def clean_dir(self, path, vm):
+        pattern = vm + '-\d*|' + vm
+        try:
+            for f in os.listdir(path):
+                if re.search(pattern, f):
+                    folder = os.path.join(path, f)
+                    if os.path.isdir(folder):
+                        shutil.rmtree(folder)
+                        self.log_event(vm=vm, msg="delete old backup "+folder, severity='info')
+            return 1
+        except OSError as err:
+            self.log_event(vm=self.virtual, msg=err, severity='error')
+            return 0
 
     def verify_path(self, path):
         try:
@@ -394,19 +410,32 @@ class OvirtBackup():
 
     def verify_environment(self, path, vm, export):
         if self.verify_path(path=path):
+            print("Verify exists path {}: [ OK ]".format(path))
             path_backup = os.path.join(path, vm)
             storage_list = list()
             for storage in self.api.storagedomains.list():
                 storage_list.append(storage.name)
             if export in storage_list:
+                print("Verify exists export domain {}: [ OK ]".format(export))
                 if not self.verify_path(path=path_backup):
+                    print("Verify not exists old backup {}: [ OK ]".format(export))
+                    print("All checks: [ OK ]")
                     return 1
                 else:
-                    self.delete_local_folder(path_backup)
-                    return 1
+                    print("Verify exists old backup {}*: [ FAIL ]".format(vm))
+                    if self.clean_dir(path=path, vm=vm):
+#                    if self.delete_local_folder(path_backup):
+                        print("Delete old backup {}*: [ OK ]".format(vm))
+                        print("All checks: [ OK ]")
+                        return 1
+                    else:
+                        print("Delete old backup {}-*: [ FAIL ]".format(vm))
+                        return 0
             else:
+                print("Verify exists export domain {}: [ FAIL ]".format(export))
                 return 0
         else:
+            print("Verify exists path {}: [ FAIL ]".format(path))
             return 0
 
 
