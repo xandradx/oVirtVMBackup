@@ -103,7 +103,7 @@ class OvirtBackup():
             snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             snapshot.delete()
             spinner = Spinner()
-            print("waiting for delete snapshot... ")
+            print("waiting for delete old snapshot... ")
             while self.snapshot_status(vm, snap_id=snapshot.id):
                 spinner.update()
             spinner.clear()
@@ -159,12 +159,13 @@ class OvirtBackup():
         self.state = self.api.vms.get(vm).status.state
         return self.state
 
-    def delete_tmp_vm(self,new_name):
+    def delete_tmp_vm(self, name):
         try:
-            self.api.vms.get(name=new_name).delete()
+            self.api.vms.get(name=name).delete()
+            return 1
         except Exception as e:
             print(e.message)
-            exit(-1)
+            return 0
 
     def export_vm(self, new_name, export):
         try:
@@ -418,7 +419,7 @@ class OvirtBackup():
             if export in storage_list:
                 print("Verify exists export domain {}: [ OK ]".format(export))
                 if not self.verify_path(path=path_backup):
-                    print("Verify not exists old backup {}: [ OK ]".format(export))
+                    print("Verify not exists old backup {}: [ OK ]".format(path))
                     print("All checks: [ OK ]")
                     return 1
                 else:
