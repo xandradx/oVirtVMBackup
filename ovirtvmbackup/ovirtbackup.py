@@ -174,6 +174,15 @@ class OvirtBackup():
         except Exception as e:
             print(e.message)
             exit(1)
+
+    def delete_export_storage(self, name, export):
+        export_vms = list()
+        for vm in self.api.storagedomains.get(export).vms.list():
+            export_vms.append(vm.get_name())
+
+        if name in export_vms:
+            self.api.storagedomains.get(export).vms.get(name).delete()
+            print("delete successful")
             
 # Funciones de manejo de Exports Domains
 
