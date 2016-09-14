@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import fnmatch
+import re
 import shutil
 
 import sys
@@ -18,10 +19,12 @@ from xml.dom import minidom
 
 class OvirtBackup():
     """Class for export and import Virtual Machine in oVirt/RHEV environment"""
-    def __init__(self, url, user, password):
+    def __init__(self, url, user, password, virtual_machine=None, export_path=None):
         self.url = url
         self.user = user
         self.password = password
+        self.virtual = virtual_machine
+        self.export_path = export_path
 
     def print_info(self):
         print(self.url)
@@ -100,7 +103,7 @@ class OvirtBackup():
             snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
             snapshot.delete()
             spinner = Spinner()
-            print("waiting for delete snapshot... ")
+            print("waiting for delete old snapshot... ")
             while self.snapshot_status(vm, snap_id=snapshot.id):
                 spinner.update()
             spinner.clear()
@@ -156,12 +159,13 @@ class OvirtBackup():
         self.state = self.api.vms.get(vm).status.state
         return self.state
 
-    def delete_tmp_vm(self,new_name):
+    def delete_tmp_vm(self, name):
         try:
-            self.api.vms.get(name=new_name).delete()
+            self.api.vms.get(name=name).delete()
+            return 1
         except Exception as e:
             print(e.message)
-            exit(-1)
+            return 0
 
     def export_vm(self, new_name, export):
         try:
@@ -170,6 +174,15 @@ class OvirtBackup():
         except Exception as e:
             print(e.message)
             exit(1)
+
+    def delete_export_storage(self, name, export):
+        export_vms = list()
+        for vm in self.api.storagedomains.get(export).vms.list():
+            export_vms.append(vm.get_name())
+
+        if name in export_vms:
+            self.api.storagedomains.get(export).vms.get(name).delete()
+            print("delete successful")
             
 # Funciones de manejo de Exports Domains
 
@@ -374,13 +387,67 @@ class OvirtBackup():
         except:
             pass
 
-    def delete_local_folder(self, export_path, vm_name):
+    def delete_local_folder(self, path):
         try:
-            path_to_delete = os.path.join(export_path, vm_name)
-            shutil.rmtree(path_to_delete)
+            shutil.rmtree(path)
+            return 1
         except OSError as err:
-            self.log_event(vm=vm_name, msg=err.message, severity='error')
-            exit(1)
+            self.log_event(vm=self.virtual, msg=err, severity='error')
+            return 0
+
+    def clean_dir(self, path, vm):
+        pattern = vm + '-\d*|' + vm
+        try:
+            for f in os.listdir(path):
+                if re.search(pattern, f):
+                    folder = os.path.join(path, f)
+                    if os.path.isdir(folder):
+                        shutil.rmtree(folder)
+                        self.log_event(vm=vm, msg="delete old backup "+folder, severity='info')
+            return 1
+        except OSError as err:
+            self.log_event(vm=self.virtual, msg=err, severity='error')
+            return 0
+
+    def verify_path(self, path):
+        try:
+            if os.path.isdir(path):
+                return 1
+            else:
+                return 0
+        except OSError as err:
+            return 0
+
+    def verify_environment(self, path, vm, export):
+        if self.verify_path(path=path):
+            print("Verify exists path {}: [ OK ]".format(path))
+            path_backup = os.path.join(path, vm)
+            storage_list = list()
+            for storage in self.api.storagedomains.list():
+                storage_list.append(storage.name)
+            if export in storage_list:
+                print("Verify exists export domain {}: [ OK ]".format(export))
+                if not self.verify_path(path=path_backup):
+                    print("Verify not exists old backup {}: [ OK ]".format(path))
+                    print("All checks: [ OK ]")
+                    return 1
+                else:
+                    print("Verify exists old backup {}*: [ FAIL ]".format(vm))
+                    if self.clean_dir(path=path, vm=vm):
+#                    if self.delete_local_folder(path_backup):
+                        print("Delete old backup {}*: [ OK ]".format(vm))
+                        print("All checks: [ OK ]")
+                        return 1
+                    else:
+                        print("Delete old backup {}-*: [ FAIL ]".format(vm))
+                        return 0
+            else:
+                print("Verify exists export domain {}: [ FAIL ]".format(export))
+                return 0
+        else:
+            print("Verify exists path {}: [ FAIL ]".format(path))
+            return 0
+
 
 class Spinner():
     """Class for implement Spinner in other process"""
