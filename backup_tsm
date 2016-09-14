@@ -140,7 +140,7 @@ def main():
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M")
     dsmc=general['dsmc']
     vmname=sys.argv[1]
-    new_name=vmname+'-snap'
+    new_name=vmname+'-SNAP'
     description = "oVirtBackup"
     url = "https://" + general['manager']
     print(url)
@@ -150,13 +150,16 @@ def main():
     print("trying auth...")
     oVirt.connect()
     try:
-        print("auth OK")
-        log_file=open('/tmp/'+vmname+'.log','w')
-        log_file.write('KVM BACKUP: Starting full backup of virtual machine from '+general['manager']+' at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'\n')
-        export(
-        conn=oVirt, vm_name=vmname, new_name=new_name,
-        description=description, export_domain=general['export']
-        )
+        if oVirt.verify_environment(path=path_export, vm=vmname, export=general['export']):
+            print("auth OK")
+            log_file=open('/tmp/'+vmname+'.log','w')
+            log_file.write('KVM BACKUP: Starting full backup of virtual machine from '+general['manager']+' at '+time.strftime('%m/%d/%y %H:%M:%S',time.localtime())+'\n')
+            export(
+            conn=oVirt, vm_name=vmname, new_name=new_name,
+            description=description, export_domain=general['export']
+            )
+        else:
+            exit(1)
     except:
         if (oVirt.if_exists_vm(vm=vmname)):
                 oVirt.log_event(vmname,'Backup VM \''+vmname+'\' Failed','error')
