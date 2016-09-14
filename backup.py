@@ -74,7 +74,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 print("Remove snap and Virtual Machine")
                 # Eliminando snapshot y {vm}-snap
                 conn.delete_snap(vm=vm_name, desc=description)
-                conn.delete_tmp_vm(new_name=new_name)
+                conn.delete_tmp_vm(name=new_name)
                 print("process finished successful")
         elif status == 'down':
             print("Virtual Machine {} is down".format(vm_name))
