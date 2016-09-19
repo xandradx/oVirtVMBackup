@@ -196,7 +196,6 @@ def main():
                 log_file.close()
             except subprocess.CalledProcessError as e:
                 tempdir = path_export + vmname + '-' + timestamp
-                os.rename(path_export + vmname, tempdir)
                 oVirt.log_event(vmname,
                                 'Uploading VM ' + vmname + ' to TSM has failed with error code: ' + str(e.returncode),
                                 'error')
