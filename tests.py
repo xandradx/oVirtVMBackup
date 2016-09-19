@@ -21,10 +21,5 @@ STORAGE_DOMAINS = ovirt.get_storage_domains(VM_NAME)
 # print("DATACENTER id: {} name: {}".format(DATACENTER.id, DATACENTER.name))
 # for st in STORAGE_DOMAINS:
 #    print("STORAGE id: {} name: {} type: {}".format(st.id, st.name, st.type_))
-
-print(ovirt.vm_state('TSMProxy'))
-print("Maquina virtual: {}".format(ovirt.virtual))
-
-
-# ovirt.verify_environment(path='/tmp', vm='Web01', export='LabExport')
-
+for cluster in ovirt.api.clusters.list():
+    print(cluster.get_name())
