@@ -55,8 +55,7 @@ class OvirtBackup:
             self.api.vms.get(vm).snapshots.add(
                 params.Snapshot(
                     description=desc,
-                    vm=self.api.vms.get(vm),
-                    persist_memorystate=True
+                    vm=self.api.vms.get(vm)
                 )
             )
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
@@ -174,13 +173,20 @@ class OvirtBackup:
             exit(1)
 
     def delete_export_storage(self, name, export):
+        snap_name = name + "-SNAP"
         export_vms = list()
         for vm in self.api.storagedomains.get(export).vms.list():
             export_vms.append(vm.get_name())
 
-        if name in export_vms:
-            self.api.storagedomains.get(export).vms.get(name).delete()
-            print("delete successful")
+        if snap_name in export_vms:
+            try:
+                self.api.storagedomains.get(export).vms.get(snap_name).delete()
+                return 1
+            except RequestError as err:
+                print("Error: {} Reason: {}".format(err.status, err.reason))
+                return 0
+        else:
+            return 1
 
         # Funciones de manejo de Exports Domains
 
@@ -427,26 +433,20 @@ class OvirtBackup:
     def verify_environment(self, path, vm, export):
         if self.verify_path(path=path):
             print("Verify exists path {}: [ OK ]".format(path))
-            path_backup = os.path.join(path, vm)
+            #path_backup = os.path.join(path, vm)
             storage_list = list()
             for storage in self.api.storagedomains.list():
                 storage_list.append(storage.name)
             if export in storage_list:
                 print("Verify exists export domain {}: [ OK ]".format(export))
-                if not self.verify_path(path=path_backup):
-                    print("Verify not exists old backup {}: [ OK ]".format(path))
-                    print("All checks: [ OK ]")
+                if self.clean_dir(path=path, vm=vm):
+                    print("Delete old backup for {} if exist's: [ OK ]".format(vm))
+                    if self.delete_export_storage(name=vm, export=export):
+                        print("All checks: [ OK ]")
                     return 1
                 else:
-                    print("Verify exists old backup {}*: [ FAIL ]".format(vm))
-                    if self.clean_dir(path=path, vm=vm):
-                        #                    if self.delete_local_folder(path_backup):
-                        print("Delete old backup {}*: [ OK ]".format(vm))
-                        print("All checks: [ OK ]")
-                        return 1
-                    else:
-                        print("Delete old backup {}-*: [ FAIL ]".format(vm))
-                        return 0
+                    print("Delete old backup for {}: [ FAIL ]".format(vm))
+                    return 0
             else:
                 print("Verify exists export domain {}: [ FAIL ]".format(export))
                 return 0
