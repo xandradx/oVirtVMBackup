@@ -8,7 +8,6 @@ import shutil
 import sys
 import time
 from xml.dom import minidom
-
 from lxml import etree
 from ovirtsdk.api import API
 from ovirtsdk.infrastructure.errors import RequestError
