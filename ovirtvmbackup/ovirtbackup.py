@@ -221,15 +221,15 @@ class OvirtBackup:
     def do_export_maintenance(self, dc_id, export):
         self.api.datacenters.get(id=dc_id).storagedomains.get(export).deactivate()
         spinner = Spinner()
-        print("waiting for maintenance Storage... ")
+        print("waiting for maintenance Storage {}... ".format(export))
         while self.api.datacenters.get(id=dc_id).storagedomains.get(
                 export).get_status().get_state() != "maintenance":
             spinner.update()
         spinner.clear()
 
-    def attach_export(self, dc_id, export_ok):
+    def attach_export(self, dc_id, export):
         try:
-            if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export_ok)):
+            if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export)):
                 print("Export Domain was attached successfully")
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
