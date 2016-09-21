@@ -164,10 +164,25 @@ class OvirtBackup:
             print(e.message)
             return 0
 
-    def export_vm(self, new_name, export):
+    def export_vm(self, new_name, export, collapse):
         try:
-            self.api.vms.get(name=new_name).export(params.Action(storage_domain=export, force=True))
-            self.__wait(new_name, 1)
+            if collapse == 'False':
+                self.api.vms.get(name=new_name).export(
+                    params.Action(
+                        storage_domain=export,
+                        force=True
+                    )
+                )
+                self.__wait(new_name, 1)
+            elif collapse == 'True':
+                self.api.vms.get(name=new_name).export(
+                    params.Action(
+                        storage_domain=export,
+                        force=True,
+                        discard_snapshots=True
+                    )
+                )
+                self.__wait(new_name, 1)
         except Exception as e:
             print(e.message)
             exit(1)
