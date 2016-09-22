@@ -21,6 +21,15 @@ def export(conn, vm_name, new_name, description, export_domain):
 
     if (conn.if_exists_vm(vm=vm_name)):
         status = conn.vm_state(vm=vm_name)
+        print("Preparing Export Domain {}".format(export_domain))
+        conn.manage_export(vm=vm_name, export=export_domain)
+        print("Cleaning Export Domain {} from previous restore's".format(export_domain))
+        if conn.clean_export_domain(name=vm_name, export=export_domain):
+            print("All checks: [ OK ]")
+        else:
+            print("Fail in clean exportdomain {}".format(export_domain))
+            exit(1)
+        print("Export domain {} successful activated".format(export_domain))
         if (conn.if_exists_vm(vm=new_name)):
             print("Virtual Machine {} Backup already exists".format(new_name))
             print("Trying to delete Virtual Machine {}".format(new_name))
@@ -39,9 +48,6 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("creating new virtual machine {}".format(new_name))
             conn.create_vm_to_export(vm=vm_name, new_name=new_name, desc=description)
             print("\ncreate virtual machine {} successful".format(new_name))
-            print("Activating Export Domain {}".format(export_domain))
-            conn.active_export(vm=vm_name, export_name=export_domain)
-            print("Export domain {} successful activated".format(export_domain))
             print("Export Virtual Machine {}".format(new_name))
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(new_name, export_dom, 'False')
@@ -72,9 +78,6 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
         elif status == 'down':
             print("Virtual Machine {} is down".format(vm_name))
-            print("Activating Export Domain {}".format(export_domain))
-            conn.active_export(vm=vm_name, export_name=export_domain)
-            print("Export domain {} successful activated".format(export_domain))
             print("Export Virtual Machine {}".format(vm_name))
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(vm_name, export_dom, 'True')
@@ -85,7 +88,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             print("Move successful")
             conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
-            print("process finished successful")
+            print("process for backup finished successful")
             conn.log_event(vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
         else:
             print("Virtual Machine {} status is {}".format(vm_name, status))
@@ -179,6 +182,7 @@ def main():
                 oVirt.log_event(vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'error')
                 exit(2)
             try:
+                print("Uploading VM {} to TSM".format(vmname))
                 oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM', 'normal')
                 log_file.write('Backup for KVM started successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
                                                                                          time.localtime()) + '\n')
