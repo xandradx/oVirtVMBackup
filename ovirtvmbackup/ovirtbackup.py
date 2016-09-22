@@ -586,7 +586,7 @@ class OvirtBackup:
                 print('VM {} in datacenter "{}" without Export'.format(name, vm_datacenter.get_name()))
                 print('Export "{}" is not attached to any datacenter'.format(export))
                 print('Trying to Attach Domain "{}" to {}'.format(export, vm_datacenter.get_name()))
-                self.do_export_up(dc_id=vm_datacenter.id, export=export)
+                self.attach_export(dc_id=vm_datacenter.id, export=export)
             elif data_center is not None:
                 if self.status_export(export_obj=export_backup) == 'active':
                     print('VM {} in datacenter "{}" without Export'.format(name, vm_datacenter.get_name()))
