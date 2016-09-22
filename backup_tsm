@@ -22,7 +22,7 @@ def export(conn, vm_name, new_name, description, export_domain):
     if (conn.if_exists_vm(vm=vm_name)):
         status = conn.vm_state(vm=vm_name)
         print("Preparing Export Domain {}".format(export_domain))
-        conn.manage_export(vm=vm_name, export=export_domain)
+        conn.manage_export(name=vm_name, export=export_domain)
         print("Cleaning Export Domain {} from previous restore's".format(export_domain))
         if conn.clean_export_domain(name=vm_name, export=export_domain):
             print("All checks: [ OK ]")
