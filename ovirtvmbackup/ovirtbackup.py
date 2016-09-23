@@ -508,7 +508,7 @@ class OvirtBackup:
                     print('Export "{}" do maintenance'.format(vm_export.get_name()))
                     self.do_export_maintenance(dc_id=vm_datacenter.id, export=vm_export.get_name())
                     print('Trying to Detach Export "{}" from {}'.format(vm_export.get_name(), vm_datacenter.get_name()))
-                    self.detach_export(dc_id=vm_datacenter.id, export=vm_datacenter.get_name())
+                    self.detach_export(dc_id=vm_datacenter.id, export=vm_export.get_name())
                     print('Trying to Locate BK Domain "{}"'.format(export))
                     # Buscando export domain Backup
                     data_center, export_backup = self.find_export(export_name=export)
@@ -545,10 +545,8 @@ class OvirtBackup:
                     self.do_export_up(dc_id=vm_datacenter.id, export=vm_export.get_name())
                 if vm_export.get_name() != export:
                     print('Domain "{}" is not BK Domain'.format(vm_export.get_name()))
-                    print('Export "{}" do maintenance'.format(vm_export.get_name()))
-                    self.do_export_maintenance(dc_id=vm_datacenter.id, export=vm_export.get_name())
                     print('Trying to Detach Export "{}" from {}'.format(vm_export.get_name(), vm_datacenter.get_name()))
-                    self.detach_export(dc_id=vm_datacenter.id, export=vm_datacenter.get_name())
+                    self.detach_export(dc_id=vm_datacenter.id, export=vm_export.get_name())
                     print('Trying to Locate BK Domain "{}"'.format(export))
 
                     # Buscando export domain Backup
