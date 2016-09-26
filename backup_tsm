@@ -164,7 +164,7 @@ def main():
                 if oVirt.verify_environment(path=path_export, vm=vmname, export=general['export']):
                     #log_file = open('/tmp/' + vmname + '.log', 'w')
                     #log_file.write('KVM BACKUP: Starting full backup of virtual machine from ' + general[
-                        'manager'] + ' at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '\n')
+                    #    'manager'] + ' at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '\n')
                     export(
                         conn=oVirt, vm_name=vmname, new_name=new_name,
                         description=description, export_domain=general['export']
@@ -185,18 +185,18 @@ def main():
                 print("Uploading VM {} to TSM".format(vmname))
                 oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM', 'normal')
                 #log_file.write('Backup for KVM started successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
-                                                                                         time.localtime()) + '\n')
+                #                                                                         time.localtime()) + '\n')
                 #log_file.write('ACTIVITY_DETAILS=KVM Backup\n')
                 #log_file.write('AS_ENTITY="' + os.uname()[1] + '"\n')
                 #log_file.write('SUB_ENTITY="' + vmname + '"\n')
                 command = upload_tsm(path_export + vmname + "-" + timestamp, vmname)
                 #log_file.write(
-                    'Backup for KVM finished at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '.\n')
+                #    'Backup for KVM finished at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '.\n')
                 oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM has been completed ' + command + '.',
                                 'normal')
                 #log_file.write('KVM BACKUP: full backup of virtual machine from server ' + general[
-                    'manager'] + ' completed successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
-                                                                               time.localtime()) + '.\n')
+                #    'manager'] + ' completed successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
+                #                                                               time.localtime()) + '.\n')
                 #log_file.close()
             except subprocess.CalledProcessError as e:
                 tempdir = path_export + vmname + '-' + timestamp
