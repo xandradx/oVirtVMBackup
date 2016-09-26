@@ -77,7 +77,8 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("process finished successful")
             conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
         elif status == 'down':
-            conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
+            #conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
+            log_all(conn,vm_name,general['tsm_user]',general['tsm_pass'],general['log_file'],'Backup Process for VM \''+vm_name+'\' has started','normal')
             print("Virtual Machine {} is down".format(vm_name))
             print("Export Virtual Machine {}".format(vm_name))
             export_dom = conn.get_export_domain(vm=vm_name)
@@ -136,6 +137,10 @@ def remove_temp(path):
 def usage():
     print("Usage: {} VMNAME".format(sys.argv[0]))
     sys.exit(2)
+
+def log_all(conn,vmname,tsmuser,tsmpass,logfile,message,level)
+    conn.log_event(vmname,message,level)
+    
 
 def main():
     if (len(sys.argv) > 1):
