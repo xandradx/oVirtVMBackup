@@ -77,6 +77,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("process finished successful")
             conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
         elif status == 'down':
+            conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
             print("Virtual Machine {} is down".format(vm_name))
             print("Export Virtual Machine {}".format(vm_name))
             export_dom = conn.get_export_domain(vm=vm_name)
