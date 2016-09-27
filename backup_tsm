@@ -15,6 +15,26 @@ config_file='/etc/ovirt-vm-backup/ovirt-vm-backup.conf'
 vms_path = "/master/vms/"
 images_path = "/images/"
 
+def log_tsm(vmname,tsmuser,tsmpass,message,level):
+    if level == 'normal':
+        level = 'I'
+    if level == 'error':
+        level = 'E'
+    try:    
+        subprocess.check_output(['/usr/bin/dsmadmc', '-id='+tsmuser, '-pa='+tsmpass, 'issue message '+level+' "'+message+'('+vmname+')"'])
+    except:
+        pass
+
+
+def log_all(conn,vmname,message,level):
+    general = load_config(config_file)
+    conn.log_event(vmname,message+' ('+vmname+')',level)
+    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    log_file = open(general['log_file'],'a')
+    log_file.write(date+' '+message+' ('+vmname+') ['+level+']\n')
+    log_file.close()
+    print(message+' ('+vmname+') ')
+    log_tsm(vmname,general['tsm_user'],general['tsm_pass'],message,level)
 
 def export(conn, vm_name, new_name, description, export_domain):
     print("Export virtual machine {}".format(vm_name))
@@ -34,30 +54,30 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("Virtual Machine {} Backup already exists".format(new_name))
             print("Trying to delete Virtual Machine {}".format(new_name))
             if not conn.delete_tmp_vm(name=new_name):
-                conn.log_event(vm_name,
+                log_all(conn,vm_name,
                                'Delete Backup VM \'' + vm_name + '\' Failed, ' + new_name + ' already exist, you must delete \'' + new_name + '\' manually',
                                'error')
                 exit(1)
             else:
                 print("Delete Virtual Machine {} [ OK ]".format(new_name))
         if status == 'up':
-            conn.log_event(vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
-            print("creating snapshot")
+            log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
+            log_all(conn,vm_name,"creating snapshot",'normal')
             conn.create_snap(desc=description, vm=vm_name)
-            print("\ncreate snapshot successful")
-            print("creating new virtual machine {}".format(new_name))
+            log_all(conn,vm_name,"create snapshot successful",'normal')
+            log_all(conn,vm_name,"creating new virtual machine {}".format(new_name),'normal')
             conn.create_vm_to_export(vm=vm_name, new_name=new_name, desc=description)
-            print("\ncreate virtual machine {} successful".format(new_name))
-            print("Export Virtual Machine {}".format(new_name))
+            log_all(conn,vm_name,"create virtual machine {} successful".format(new_name),'normal')
+            log_all(conn,vm_name,"Export Virtual Machine {}".format(new_name),'normal')
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(new_name, export_dom, 'False')
-            print("\nExport Virtual Machine {} successful".format(export_domain))
+            log_all(conn,vm_name,"Export Virtual Machine {} successful".format(export_domain),'normal')
             print("Moving export to another location")
-            conn.log_event(vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
+            log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
             # trabajado con ovf's
-            conn.log_event(vm_name,'Backup VM keeping \''+vm_name+'\' original configuration','normal')
+            log_all(conn,vm_name,'Backup VM keeping \''+vm_name+'\' original configuration','normal')
             print("Change id's and paths")
             conn.get_running_ovf(vm=vm_name, desc=description, path=path_export)
             export_xml = conn.export_xml_path(path=path_export, vm=vm_name, find_path=vms_path)
@@ -69,27 +89,28 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.delete_tmp_ovf(path=path_export + vm_name + "/running-" + ovf_final)
             rename_clone(export_xml, vms_path_save + conn.api.vms.get(vm_name).id + "/" + ovf_final, path_export + vm_name + images_path)
             print("Move successful")
-            print("Remove snap and Virtual Machine")
+            log_all(conn,vm_name,"Remove temporary snap and Virtual Machine",'normal')
             # Eliminando snapshot y {vm}-snap
             conn.delete_tmp_vm(name=new_name)
             conn.delete_snap(vm=vm_name, desc=description)
             conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
             print("process finished successful")
-            conn.log_event(vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
+            log_all(conn,vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
         elif status == 'down':
+            log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
             print("Virtual Machine {} is down".format(vm_name))
-            print("Export Virtual Machine {}".format(vm_name))
+            log_all(conn,vm_name,"Export Virtual Machine {}".format(vm_name),'normal')
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(vm_name, export_dom, 'True')
-            print("\nExport Virtual Machine {} successful".format(vm_name))
+            log_all(conn,vm_name,"Export Virtual Machine {} successful".format(vm_name),'normal')
             print("Moving export to another location")
-            conn.log_event(vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
+            log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
             print("Move successful")
             conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
             print("process for backup finished successful")
-            conn.log_event(vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
+            log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
         else:
             print("Virtual Machine {} status is {}".format(vm_name, status))
             exit(1)
@@ -136,6 +157,8 @@ def usage():
     print("Usage: {} VMNAME".format(sys.argv[0]))
     sys.exit(2)
 
+    
+
 def main():
     if (len(sys.argv) > 1):
         if not (os.path.isfile(config_file)):
@@ -162,9 +185,6 @@ def main():
             try:
                 print("Auth [ OK ]")
                 if oVirt.verify_environment(path=path_export, vm=vmname, export=general['export']):
-                    log_file = open('/tmp/' + vmname + '.log', 'w')
-                    log_file.write('KVM BACKUP: Starting full backup of virtual machine from ' + general[
-                        'manager'] + ' at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '\n')
                     export(
                         conn=oVirt, vm_name=vmname, new_name=new_name,
                         description=description, export_domain=general['export']
@@ -173,38 +193,27 @@ def main():
                     exit(1)
             except:
                 if (oVirt.if_exists_vm(vm=vmname)):
-                    oVirt.log_event(vmname, 'Backup VM \'' + vmname + '\' Failed', 'error')
+                    log_all(oVirt,vmname, 'Backup VM \'' + vmname + '\' Failed', 'error')
                 exit(1)
             try:
-                oVirt.log_event(vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'normal')
+                log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'normal')
                 change_meta(path_export + vmname + "-" + timestamp + images_path)
             except:
-                oVirt.log_event(vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'error')
+                log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup Failed', 'error')
                 exit(2)
             try:
                 print("Uploading VM {} to TSM".format(vmname))
-                oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM', 'normal')
-                log_file.write('Backup for KVM started successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
-                                                                                         time.localtime()) + '\n')
-                log_file.write('ACTIVITY_DETAILS=KVM Backup\n')
-                log_file.write('AS_ENTITY="' + os.uname()[1] + '"\n')
-                log_file.write('SUB_ENTITY="' + vmname + '"\n')
+                log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM', 'normal')
                 command = upload_tsm(path_export + vmname + "-" + timestamp, vmname)
-                log_file.write(
-                    'Backup for KVM finished at ' + time.strftime('%m/%d/%y %H:%M:%S', time.localtime()) + '.\n')
-                oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM has been completed ' + command + '.',
+                log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM has been completed ' + command + '.',
                                 'normal')
-                log_file.write('KVM BACKUP: full backup of virtual machine from server ' + general[
-                    'manager'] + ' completed successfully at ' + time.strftime('%m/%d/%y %H:%M:%S',
-                                                                               time.localtime()) + '.\n')
-                log_file.close()
             except subprocess.CalledProcessError as e:
                 tempdir = path_export + vmname + '-' + timestamp
-                oVirt.log_event(vmname,
+                log_all(oVirt,vmname,
                                 'Uploading VM ' + vmname + ' to TSM has failed with error code: ' + str(e.returncode),
                                 'error')
                 print e
-                oVirt.log_event(vmname, 'Uploading VM ' + vmname + ' to TSM has failed and moved to ' + tempdir,
+                log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM has failed and moved to ' + tempdir,
                                 'error')
                 exit(3)
             try:

@@ -400,6 +400,7 @@ class OvirtBackup:
             return e.errno
 
     def log_event(self, vm, msg, severity):
+        # Funcion para manejo de LOG
         try:
             vm_obj = self.api.vms.get(vm)
             self.api.events.add(
