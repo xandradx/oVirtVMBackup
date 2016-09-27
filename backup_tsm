@@ -21,7 +21,7 @@ def log_tsm(vmname,tsmuser,tsmpass,message,level):
     if level == 'error':
         level = 'E'
     try:    
-        subprocess.check_output(['/usr/bin/dsmadmc', '-id='+tsmuser, '-pa='+tsmpass, 'issue message '+level+' "'+message+'('+vmname+')"'])
+        subprocess.check_output(['sudo','/usr/bin/dsmadmc', '-id='+tsmuser, '-pa='+tsmpass, 'issue message '+level+' "'+message+' ('+vmname+')"','cwd=/tmp/'])
     except:
         pass
 

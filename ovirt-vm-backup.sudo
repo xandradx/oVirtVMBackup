@@ -1,1 +1,1 @@
-ovirt-backup ALL=(ALL) NOPASSWD: /usr/bin/dsmc
+ovirt-backup ALL=(ALL) NOPASSWD: /usr/bin/dsmc, /usr/bin/dsmadmc
