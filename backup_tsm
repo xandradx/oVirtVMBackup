@@ -18,7 +18,7 @@ images_path = "/images/"
 def log_all(conn,vmname,message,level):
     general = load_config(config_file)
     conn.log_event(vmname,message,level)
-    date=time.strftime("%m-%d-%y %H:%M:%S", time.gmtime())
+    date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_file = open(general['log_file'],'a')
     log_file.write(date+' '+message+' ['+level+']\n')
     log_file.close()
