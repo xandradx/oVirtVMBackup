@@ -15,15 +15,26 @@ config_file='/etc/ovirt-vm-backup/ovirt-vm-backup.conf'
 vms_path = "/master/vms/"
 images_path = "/images/"
 
+def log_tsm(vmname,tsmuser,tsmpass,message,level):
+    if level == 'normal':
+        level = 'I'
+    if level == 'error':
+        level = 'E'
+    try:    
+        subprocess.check_output(['/usr/bin/dsmadmc', '-id='+tsmuser, '-pa='+tsmpass, 'issue message '+level+' "'+message+'('+vmname+')"'])
+    except:
+        pass
+
+
 def log_all(conn,vmname,message,level):
     general = load_config(config_file)
-    conn.log_event(vmname,message,level)
+    conn.log_event(vmname,message+' ('+vmname+')',level)
     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_file = open(general['log_file'],'a')
-    log_file.write(date+' '+message+' ['+level+']\n')
+    log_file.write(date+' '+message+' ('+vmname+') ['+level+']\n')
     log_file.close()
-    
-    
+    print(message+' ('+vmname+') ')
+    log_tsm(vmname,general['tsm_user'],general['tsm_pass'],message,level)
 
 def export(conn, vm_name, new_name, description, export_domain):
     print("Export virtual machine {}".format(vm_name))
@@ -51,16 +62,16 @@ def export(conn, vm_name, new_name, description, export_domain):
                 print("Delete Virtual Machine {} [ OK ]".format(new_name))
         if status == 'up':
             log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
-            print("creating snapshot")
+            log_all(conn,vm_name,"creating snapshot",'normal')
             conn.create_snap(desc=description, vm=vm_name)
-            print("\ncreate snapshot successful")
-            print("creating new virtual machine {}".format(new_name))
+            log_all(conn,vm_name,"create snapshot successful",'normal')
+            log_all(conn,vm_name,"creating new virtual machine {}".format(new_name),'normal')
             conn.create_vm_to_export(vm=vm_name, new_name=new_name, desc=description)
-            print("\ncreate virtual machine {} successful".format(new_name))
-            print("Export Virtual Machine {}".format(new_name))
+            log_all(conn,vm_name,"create virtual machine {} successful".format(new_name),'normal')
+            log_all(conn,vm_name,"Export Virtual Machine {}".format(new_name),'normal')
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(new_name, export_dom, 'False')
-            print("\nExport Virtual Machine {} successful".format(export_domain))
+            log_all(conn,vm_name,"Export Virtual Machine {} successful".format(export_domain),'normal')
             print("Moving export to another location")
             log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
@@ -78,7 +89,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             conn.delete_tmp_ovf(path=path_export + vm_name + "/running-" + ovf_final)
             rename_clone(export_xml, vms_path_save + conn.api.vms.get(vm_name).id + "/" + ovf_final, path_export + vm_name + images_path)
             print("Move successful")
-            print("Remove snap and Virtual Machine")
+            log_all(conn,vm_name,"Remove temporary snap and Virtual Machine",'normal')
             # Eliminando snapshot y {vm}-snap
             conn.delete_tmp_vm(name=new_name)
             conn.delete_snap(vm=vm_name, desc=description)
@@ -88,10 +99,10 @@ def export(conn, vm_name, new_name, description, export_domain):
         elif status == 'down':
             log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' has started','normal')
             print("Virtual Machine {} is down".format(vm_name))
-            print("Export Virtual Machine {}".format(vm_name))
+            log_all(conn,vm_name,"Export Virtual Machine {}".format(vm_name),'normal')
             export_dom = conn.get_export_domain(vm=vm_name)
             conn.export_vm(vm_name, export_dom, 'True')
-            print("\nExport Virtual Machine {} successful".format(vm_name))
+            log_all(conn,vm_name,"Export Virtual Machine {} successful".format(vm_name),'normal')
             print("Moving export to another location")
             log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
             conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
