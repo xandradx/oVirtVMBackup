@@ -4,7 +4,7 @@ OK=0
 
 for VM in $@
 do
-  echo "$0.py ${VM}"
+  $0.py ${VM}
   if [ $? -eq 0 ]
   then
     OK=$[OK+1]
