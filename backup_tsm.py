@@ -48,7 +48,7 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("All checks: [ OK ]")
         else:
             print("Fail in clean exportdomain {}".format(export_domain))
-            exit(1)
+            exit(8)
         print("Export domain {} successful activated".format(export_domain))
         if (conn.if_exists_vm(vm=new_name)):
             print("Virtual Machine {} Backup already exists".format(new_name))
@@ -57,7 +57,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 log_all(conn,vm_name,
                                'Delete Backup VM \'' + vm_name + '\' Failed, ' + new_name + ' already exist, you must delete \'' + new_name + '\' manually',
                                'error')
-                exit(1)
+                exit(9)
             else:
                 print("Delete Virtual Machine {} [ OK ]".format(new_name))
         if status == 'up':
@@ -113,10 +113,10 @@ def export(conn, vm_name, new_name, description, export_domain):
             log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
         else:
             print("Virtual Machine {} status is {}".format(vm_name, status))
-            exit(1)
+            exit(10)
     else:
         print("Virtual Machine {} doesn't exists".format(vm_name))
-        exit(1)
+        exit(11)
 
 def vm_import(name):
     print("Import virtual machine {}".format(name))
@@ -155,7 +155,7 @@ def remove_temp(path):
 
 def usage():
     print("Usage: {} VMNAME".format(sys.argv[0]))
-    sys.exit(2)
+    sys.exit(1)
 
     
 
@@ -163,7 +163,7 @@ def main():
     if (len(sys.argv) > 1):
         if not (os.path.isfile(config_file)):
             print("No configuration file found")
-            sys.exit(1)
+            sys.exit(2)
         for vmname in sys.argv[1:]:
             print("Backup for vm {}".format(vmname))
             general = load_config(config_file)
@@ -190,20 +190,20 @@ def main():
                         description=description, export_domain=general['export']
                     )
                 else:
-                    exit(1)
+                    exit(3)
             except:
                 if (oVirt.if_exists_vm(vm=vmname)):
                     log_all(oVirt,vmname, 'Backup VM \'' + vmname + '\' Failed', 'error')
-                exit(1)
+                exit(4)
             try:
                 log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'normal')
                 change_meta(path_export + vmname + "-" + timestamp + images_path)
             except:
                 log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup Failed', 'error')
-                exit(2)
+                exit(5)
             try:
                 print("Uploading VM {} to TSM".format(vmname))
-                log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM', 'normal')
+                log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM as '+ vmname + '-' + timestamp, 'normal')
                 command = upload_tsm(path_export + vmname + "-" + timestamp, vmname)
                 log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM has been completed ' + command + '.',
                                 'normal')
@@ -215,12 +215,12 @@ def main():
                 print e
                 log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM has failed and moved to ' + tempdir,
                                 'error')
-                exit(3)
+                exit(6)
             try:
                 remove_temp(path_export + vmname + "-" + timestamp)
             except:
                 print("Couldn't delete {}".format(path_export + vmname + "-" + timestamp))
-                exit(4)
+                exit(7)
     else:
         usage()
 
