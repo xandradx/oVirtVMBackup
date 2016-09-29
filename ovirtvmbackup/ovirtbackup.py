@@ -62,7 +62,7 @@ class OvirtBackup:
             self.__wait_snap(vm, self.snapshot.id)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(1)
+            exit(12)
 
     def snapshot_status(self, vm, snap_id):
         snapshot = self.api.vms.get(vm).snapshots.get(id=snap_id)
@@ -106,7 +106,7 @@ class OvirtBackup:
             spinner.clear()
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(1)
+            exit(13)
 
     def create_vm_to_export(self, vm, new_name, desc):
         try:
@@ -124,7 +124,7 @@ class OvirtBackup:
             self.__wait(new_name, 0)
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(1)
+            exit(14)
 
     def get_storage_domains(self, vm):
         self.datacenter = self.get_dc(vm)
@@ -185,7 +185,7 @@ class OvirtBackup:
                 self.__wait(new_name, 1)
         except Exception as e:
             print(e.message)
-            exit(1)
+            exit(14)
 
     def clean_export_domain(self, name, export):
         snap_name = name + "-SNAP"
@@ -248,7 +248,7 @@ class OvirtBackup:
                 print("Export Domain was attached successfully")
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(0)
+            exit(17)
 
     def do_export_up(self, dc_id, export):
         if self.api.datacenters.get(id=dc_id).storagedomains.get(export).activate():
@@ -282,7 +282,7 @@ class OvirtBackup:
             os.makedirs(export_path + vm_name + images)
         except OSError as e:
             print(e)
-            exit(1)
+            exit(15)
 
     def mv_data(self, new_name, export, source, destination, stid):
         self.dest = export + new_name + destination
@@ -328,7 +328,7 @@ class OvirtBackup:
             return ovf_path
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
-            exit(1)
+            exit(16)
 
     def get_vm_export_xml(self, xml_export):
         xml_tag = xml_export.getElementsByTagName("rasd:StorageId")
