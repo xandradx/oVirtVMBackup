@@ -1,6 +1,7 @@
 #!/bin/env python
 from __future__ import print_function
 
+import re
 from subprocess import check_call, CalledProcessError, check_output
 
 import configargparse
@@ -26,8 +27,8 @@ def args():
 
 def get_tsm(path,directory):
     try:
-        dsmc = check_output(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
-        return 0
+        check_output(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
+        return 1
     except CalledProcessError as error:
         return error.returncode
 
@@ -53,17 +54,25 @@ def restore_imgs(disksg, imgs, export_imgs):
         print("moving {} to {}".format(disk_src, export_imgs))
         shutil.move(disk_src, export_imgs)
 
+def export_path_id(path):
+    pattern = '[\w]{8}(-[\w]{4}){3}-[\w]{12}$'
+    for f in os.listdir(path):
+        if re.search(pattern, f):
+            folder = os.path.join(path, f)
+            if os.path.isdir(folder):
+                return folder
+
 
 def restore(path, directory):
     try:
-        export_id = "e412a6d5-8d62-4df5-a71c-352c50287a55"
+        path_export = export_path_id(path=path)
         imgs = os.path.join(path, directory, "images")
         vms = os.path.join(path, directory, "master", "vms")
-        export_imgs = os.path.join(path, export_id, "images")
+        export_imgs = os.path.join(path_export, "images")
         ovf, dir_vm = ovf_get(vms)
         disksg = parse_xml(ovf)
         restore_imgs(disksg=disksg, imgs=imgs, export_imgs=export_imgs)
-        export_vms = os.path.join(path, export_id, "master", "vms")
+        export_vms = os.path.join(path_export, "master", "vms")
         shutil.move(dir_vm, export_vms)
     except OSError as e:
         print(e)
@@ -75,7 +84,7 @@ def main():
         print("path {} doesn't exists".format(path))
     else:
         print("Get {} from TSM".format(directory))
-        if get_tsm(path=path, directory=directory) == 0:
+        if get_tsm(path=path, directory=directory):
             restore(path=path, directory=directory)
             shutil.rmtree(os.path.join(path, directory))
         else:

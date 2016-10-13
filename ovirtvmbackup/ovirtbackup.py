@@ -55,8 +55,7 @@ class OvirtBackup:
             self.api.vms.get(vm).snapshots.add(
                 params.Snapshot(
                     description=desc,
-                    vm=self.api.vms.get(vm),
-                    persist_memorystate=True
+                    vm=self.api.vms.get(vm)
                 )
             )
             self.snapshot = self.api.vms.get(vm).snapshots.list(description=desc)[0]
@@ -165,22 +164,44 @@ class OvirtBackup:
             print(e.message)
             return 0
 
-    def export_vm(self, new_name, export):
+    def export_vm(self, new_name, export, collapse):
         try:
-            self.api.vms.get(name=new_name).export(params.Action(storage_domain=export, force=True))
-            self.__wait(new_name, 1)
+            if collapse == 'False':
+                self.api.vms.get(name=new_name).export(
+                    params.Action(
+                        storage_domain=export,
+                        force=True
+                    )
+                )
+                self.__wait(new_name, 1)
+            elif collapse == 'True':
+                self.api.vms.get(name=new_name).export(
+                    params.Action(
+                        storage_domain=export,
+                        force=True,
+                        discard_snapshots=True
+                    )
+                )
+                self.__wait(new_name, 1)
         except Exception as e:
             print(e.message)
             exit(1)
 
-    def delete_export_storage(self, name, export):
+    def clean_export_domain(self, name, export):
+        snap_name = name + "-SNAP"
         export_vms = list()
         for vm in self.api.storagedomains.get(export).vms.list():
-            export_vms.append(vm.get_name())
+            if (vm.get_name() == name) or (vm.get_name() == snap_name):
+                export_vms.append(vm.get_name())
 
-        if name in export_vms:
-            self.api.storagedomains.get(export).vms.get(name).delete()
-            print("delete successful")
+        try:
+            for list_vm in export_vms:
+                print("Delete exported virtual machine {} from {} ".format(list_vm, export))
+                self.api.storagedomains.get(export).vms.get(list_vm).delete()
+            return 1
+        except RequestError as err:
+            print("Error: {} Reason: {}".format(err.status, err.reason))
+            return 0
 
         # Funciones de manejo de Exports Domains
 
@@ -215,15 +236,15 @@ class OvirtBackup:
     def do_export_maintenance(self, dc_id, export):
         self.api.datacenters.get(id=dc_id).storagedomains.get(export).deactivate()
         spinner = Spinner()
-        print("waiting for maintenance Storage... ")
+        print("waiting for maintenance Storage {}... ".format(export))
         while self.api.datacenters.get(id=dc_id).storagedomains.get(
                 export).get_status().get_state() != "maintenance":
             spinner.update()
         spinner.clear()
 
-    def attach_export(self, dc_id, export_ok):
+    def attach_export(self, dc_id, export):
         try:
-            if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export_ok)):
+            if self.api.datacenters.get(id=dc_id).storagedomains.add(self.api.storagedomains.get(export)):
                 print("Export Domain was attached successfully")
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
@@ -280,9 +301,10 @@ class OvirtBackup:
             objects["Disks"].append(disk.id)
 
         old_name = ''
-        if "-" in vm:
-            old_name = vm.split("-")[0]
-        elif not "-" in vm:
+        pattern = '-SNAP'
+        if re.search(pattern, vm):
+            old_name = vm.split("-SNAP")[0]
+        else:
             old_name = vm
 
         for disk in objects["Disks"]:
@@ -379,6 +401,7 @@ class OvirtBackup:
             return e.errno
 
     def log_event(self, vm, msg, severity):
+        # Funcion para manejo de LOG
         try:
             vm_obj = self.api.vms.get(vm)
             self.api.events.add(
@@ -427,32 +450,164 @@ class OvirtBackup:
     def verify_environment(self, path, vm, export):
         if self.verify_path(path=path):
             print("Verify exists path {}: [ OK ]".format(path))
-            path_backup = os.path.join(path, vm)
+            #path_backup = os.path.join(path, vm)
             storage_list = list()
             for storage in self.api.storagedomains.list():
                 storage_list.append(storage.name)
             if export in storage_list:
                 print("Verify exists export domain {}: [ OK ]".format(export))
-                if not self.verify_path(path=path_backup):
-                    print("Verify not exists old backup {}: [ OK ]".format(path))
-                    print("All checks: [ OK ]")
+                if self.clean_dir(path=path, vm=vm):
+                    print("Delete old backup directory for {} if exist's: [ OK ]".format(vm))
                     return 1
                 else:
-                    print("Verify exists old backup {}*: [ FAIL ]".format(vm))
-                    if self.clean_dir(path=path, vm=vm):
-                        #                    if self.delete_local_folder(path_backup):
-                        print("Delete old backup {}*: [ OK ]".format(vm))
-                        print("All checks: [ OK ]")
-                        return 1
-                    else:
-                        print("Delete old backup {}-*: [ FAIL ]".format(vm))
-                        return 0
+                    print("Delete old backup for {}: [ FAIL ]".format(vm))
+                    return 0
             else:
                 print("Verify exists export domain {}: [ FAIL ]".format(export))
                 return 0
         else:
             print("Verify exists path {}: [ FAIL ]".format(path))
             return 0
+
+# EXPORT'S LOGIC
+    def have_export(self, name):
+        vm_cluster = self.api.clusters.get(id=self.api.vms.get(name=name).cluster.id)
+        vm_datacenter = self.api.datacenters.get(id=vm_cluster.data_center.id)
+
+        for storage in vm_datacenter.storagedomains.list():
+            if storage.get_type() == 'export':
+                return storage, vm_datacenter
+        return None, vm_datacenter
+
+    def status_export(self, export_obj):
+        return export_obj.get_status().get_state()
+
+
+    def find_export(self, export_name):
+        attached_dc = None
+        for data_center in self.api.datacenters.list():
+            for storage in data_center.storagedomains.list():
+                if storage.get_name() == export_name:
+                    attached_dc = data_center
+                    return attached_dc, storage
+        if attached_dc is None:
+            for storage in self.api.storagedomains.list():
+                if storage.get_type() == 'export':
+                    if storage.get_name() == export_name:
+                        return attached_dc, storage
+                    
+    def manage_export(self, name, export):
+        vm_export, vm_datacenter = self.have_export(name)
+
+        if vm_export is not None:
+            print('VM {} have Export "{}"'.format(name, vm_export.get_name()))
+            if self.status_export(export_obj=vm_export) == 'active':
+                print('State of domain "{}" active'.format(vm_export.get_name()))
+                if vm_export.get_name() == export:
+                    print('Everything with Exports [ OK ]')
+                if vm_export.get_name() != export:
+                    print('Domain "{}" is not BK Domain'.format(vm_export.get_name()))
+                    print('Export "{}" do maintenance'.format(vm_export.get_name()))
+                    self.do_export_maintenance(dc_id=vm_datacenter.id, export=vm_export.get_name())
+                    print('Trying to Detach Export "{}" from {}'.format(vm_export.get_name(), vm_datacenter.get_name()))
+                    self.detach_export(dc_id=vm_datacenter.id, export=vm_export.get_name())
+                    print('Trying to Locate BK Domain "{}"'.format(export))
+                    # Buscando export domain Backup
+                    data_center, export_backup = self.find_export(export_name=export)
+                    if data_center is None:
+                        print('Export "{}" is not attached to any datacenter'.format(export))
+                        print('Trying to Attach Domain "{}" to {}'.format(export, vm_datacenter.get_name()))
+                        self.attach_export(dc_id=vm_datacenter.id, export=export)
+                    elif data_center is not None:
+                        if self.status_export(export_obj=export_backup) == 'active':
+                            print('Export "{}" is attached to datacenter {}'.format(export_backup.get_name(),
+                                                                                    data_center.get_name()))
+                            print('Export "{}" do maintenance'.format(export_backup.get_name()))
+                            self.do_export_maintenance(dc_id=data_center.id, export=export_backup.get_name())
+                            print('Trying to Detach Export "{}" from {}'.format(export_backup.get_name(),
+                                                                                data_center.get_name()))
+                            self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                            print(
+                                'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(),
+                                                                            vm_datacenter.get_name()))
+                            self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
+                        if self.status_export(export_obj=export_backup) == 'maintenance':
+                            print('State of domain "{}" maintenance'.format(export_backup.get_name()))
+                            print('Trying to Detach Export "{}" from {}'.format(export_backup.get_name(),
+                                                                                data_center.get_name()))
+                            self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                            print(
+                                'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(),
+                                                                            vm_datacenter.get_name()))
+                            self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
+            elif self.status_export(export_obj=vm_export) == 'maintenance':
+                print('State of domain "{}" maintenance'.format(vm_export.get_name()))
+                if vm_export.get_name() == export:
+                    print('Trying to activate Export "{}"'.format(export))
+                    self.do_export_up(dc_id=vm_datacenter.id, export=vm_export.get_name())
+                if vm_export.get_name() != export:
+                    print('Domain "{}" is not BK Domain'.format(vm_export.get_name()))
+                    print('Trying to Detach Export "{}" from {}'.format(vm_export.get_name(), vm_datacenter.get_name()))
+                    self.detach_export(dc_id=vm_datacenter.id, export=vm_export.get_name())
+                    print('Trying to Locate BK Domain "{}"'.format(export))
+
+                    # Buscando export domain Backup
+                    data_center, export_backup = self.find_export(export_name=export)
+                    if data_center is None:
+                        print('Export "{}" is not attached to any datacenter'.format(export))
+                        print('Trying to Attach Domain "{}" to {}'.format(export, vm_datacenter.get_name()))
+                        self.attach_export(dc_id=vm_datacenter.id, export=export)
+                    elif data_center is not None:
+                        if self.status_export(export_obj=export_backup) == 'active':
+                            print('Export "{}" is attached to datacenter {}'.format(export_backup.get_name(),
+                                                                                    data_center.get_name()))
+                            print('Export "{}" do maintenance'.format(export_backup.get_name()))
+                            self.do_export_maintenance(dc_id=data_center.id, export=export_backup.get_name())
+                            print('Trying to Detach Export "{}" from {}'.format(export_backup.get_name(),
+                                                                                data_center.get_name()))
+                            self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                            print(
+                                'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(),
+                                                                            vm_datacenter.get_name()))
+                            self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
+                        if self.status_export(export_obj=export_backup) == 'maintenance':
+                            print('State of domain "{}" maintenance'.format(export_backup.get_name()))
+                            print('Trying to Detach Export "{}" from {}'.format(export_backup.get_name(),
+                                                                                data_center.get_name()))
+                            self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                            print(
+                                'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(),
+                                                                            vm_datacenter.get_name()))
+                            self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
+        elif vm_export is None:
+            # Buscando export domain Backup
+            data_center, export_backup = self.find_export(export_name=export)
+            if data_center is None:
+                print('VM {} in datacenter "{}" without Export'.format(name, vm_datacenter.get_name()))
+                print('Export "{}" is not attached to any datacenter'.format(export))
+                print('Trying to Attach Domain "{}" to {}'.format(export, vm_datacenter.get_name()))
+                self.attach_export(dc_id=vm_datacenter.id, export=export)
+            elif data_center is not None:
+                if self.status_export(export_obj=export_backup) == 'active':
+                    print('VM {} in datacenter "{}" without Export'.format(name, vm_datacenter.get_name()))
+                    print('Export "{}" is attached to datacenter {}'.format(export_backup.get_name(),
+                                                                            data_center.get_name()))
+                    print('Export "{}" do maintenance'.format(export_backup.get_name()))
+                    self.do_export_maintenance(dc_id=data_center.id, export=export_backup.get_name())
+                    print(
+                        'Trying to Detach Export "{}" from {}'.format(export_backup.get_name(), data_center.get_name()))
+                    self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                    print(
+                        'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(), vm_datacenter.get_name()))
+                    self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
+                if self.status_export(export_obj=export_backup) == 'maintenance':
+                    print('VM {} in datacenter "{}" without Export'.format(name, vm_datacenter.get_name()))
+                    print(
+                        'Trying to Detach Export "{}" from {}'.format(export_backup.get_name(), data_center.get_name()))
+                    self.detach_export(dc_id=data_center.id, export=export_backup.get_name())
+                    print(
+                        'Trying to Attach Domain "{}" to {}'.format(export_backup.get_name(), vm_datacenter.get_name()))
+                    self.attach_export(dc_id=vm_datacenter.id, export=export_backup.get_name())
 
 
 class Spinner:
