@@ -301,9 +301,10 @@ class OvirtBackup:
             objects["Disks"].append(disk.id)
 
         old_name = ''
-        if "-" in vm:
-            old_name = vm.split("-")[0]
-        elif not "-" in vm:
+        pattern = '-SNAP'
+        if re.search(pattern, vm):
+            old_name = vm.split("-SNAP")[0]
+        else:
             old_name = vm
 
         for disk in objects["Disks"]:
