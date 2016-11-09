@@ -55,20 +55,21 @@ def export(conn, vm_name, new_name, description, export_domain):
             print("Trying to delete Virtual Machine {}".format(new_name))
             if not conn.delete_tmp_vm(name=new_name):
                 log_all(conn,vm_name,
-                               'Delete Backup VM \'' + vm_name + '\' Failed, ' + new_name + ' already exist, you must delete \'' + new_name + '\' manually',
-                               'error')
+                               "Delete Backup VM '" + vm_name + "' Failed, " + new_name + " already exist, you must delete '" + new_name + "' manually",
+                               "error")
                 raise Exception(9)
             else:
                 print("Delete Virtual Machine {} [ OK ]".format(new_name))
         if status == 'up':
-            log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' state '+status+' has started','normal')
+            log_all(conn,vm_name,"Backup Process for VM '"+vm_name+"' state "+status+" has started","normal")
             log_all(conn,vm_name,"creating snapshot",'normal')
             try:
                 conn.create_snap(desc=description, vm=vm_name)
                 log_all(conn,vm_name,"create snapshot successful",'normal')
             except Exception as exit_code:
                 log_all(conn,vm_name,"create snapshot failed ",'error')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,
+                        vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             log_all(conn,vm_name,"creating new virtual machine {}".format(new_name),'normal')
             try:
@@ -76,7 +77,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 log_all(conn,vm_name,"create virtual machine {} successful".format(new_name),'normal')
             except Exception as exit_code:
                 log_all(conn,vm_name,"create virtual machine failed ",'error')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             log_all(conn,vm_name,"Export Virtual Machine {}".format(new_name),'normal')
             try:
@@ -85,19 +86,19 @@ def export(conn, vm_name, new_name, description, export_domain):
                 log_all(conn,vm_name,"Export Virtual Machine {} successful".format(export_domain),'normal')
             except Exception as exit_code:
                 log_all(conn,vm_name,"Export Virtual Machine failed ",'error')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             print("Moving export to another location")
-            log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
+            log_all(conn,vm_name,"Backup VM preparing '"+vm_name+"' for storage","normal")
             try:
                 conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
                 conn.do_mv(vm=new_name, export_path=path_export, images=images_path, vms=vms_path)
             except Exception as exit_code:
                 log_all(conn,vm_name,"Backup VM preparing failed ",'error')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             # trabajado con ovf's
-            log_all(conn,vm_name,'Backup VM keeping \''+vm_name+'\' original configuration','normal')
+            log_all(conn,vm_name,"Backup VM keeping '"+vm_name+"' original configuration","normal")
             print("Change id's and paths")
             try:
                 conn.get_running_ovf(vm=vm_name, desc=description, path=path_export)
@@ -113,7 +114,7 @@ def export(conn, vm_name, new_name, description, export_domain):
                 print("Move successful")
             except Exception as exit_code:
                 log_all(conn,vm_name,"Backup VM preparing failed ",'error')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             log_all(conn,vm_name,"Remove temporary snap and Virtual Machine",'normal')
             try:
@@ -122,25 +123,25 @@ def export(conn, vm_name, new_name, description, export_domain):
                 log_all(conn,vm_name,"Remove temporary Virtual Machine sucessfull",'normal')
             except Exception as exit_code:
                 log_all(conn,vm_name,"Remove temporary Virtual Machine failed",'failed')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             try:
                 conn.delete_snap(vm=vm_name, desc=description)
                 log_all(conn,vm_name,"Remove temporary snapshot sucessfull",'normal')
             except Exception as exit_code:
                 log_all(conn,vm_name,"Remove temporary snapshot failed",'failed')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
             #print("process finished successful")
             try:
                 conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
-                log_all(conn,vm_name,'Backup VM \''+vm_name+'\' ready for storage','normal')
+                log_all(conn,vm_name,"Backup VM '"+vm_name+"' ready for storage","normal")
             except Exception as exit_code:
-                log_all(conn,vm_name,'Backup VM \''+vm_name+'\' NOT ready for storage','failed')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name,"Backup VM '"+vm_name+"' NOT ready for storage","failed")
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
         elif status == 'down':
-            log_all(conn,vm_name,'Backup Process for VM \''+vm_name+'\' state '+status+' has started','normal')
+            log_all(conn,vm_name,"Backup Process for VM '"+vm_name+"' state "+status+" has started","normal")
             print("Virtual Machine {} is down".format(vm_name))
             log_all(conn,vm_name,"Export Virtual Machine {}".format(vm_name),'normal')
             try:
@@ -148,26 +149,26 @@ def export(conn, vm_name, new_name, description, export_domain):
                 conn.export_vm(vm_name, export_dom, 'True')
                 log_all(conn,vm_name,"Export Virtual Machine {} successful".format(vm_name),'normal')
             except Exception as exit_code:
-                log_all(conn,vm_name,'Export Virtual Machine \''+vm_name+'\' failed','failed')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name,"Export Virtual Machine '"+vm_name+"' failed","failed")
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(14)
             print("Moving export to another location")
-            log_all(conn,vm_name,'Backup VM preparing \''+vm_name+'\' for storage','normal')
+            log_all(conn,vm_name,"Backup VM preparing '"+vm_name+"' for storage","normal")
             try:
                 conn.create_dirs(vm_name=vm_name, export_path=path_export, images=images_path, vms=vms_path)
                 conn.do_mv(vm=vm_name, export_path=path_export, images=images_path, vms=vms_path)
                 print("Move successful")
                 conn.change_dirname(path=path_export, vm=vm_name, timestamp=timestamp)
                 print("process for backup finished successful")
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' ready for storage', 'normal')
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' ready for storage", "normal")
             except Exception as exit_code:
-                log_all(conn,vm_name,'Backup VM \''+vm_name+'\' NOT ready for storage','failed')
-                log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                log_all(conn,vm_name,"Backup VM '"+vm_name+"' NOT ready for storage","failed")
+                log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:"+str(exit_code.args[0])+"]","error")
                 exit(exit_code)
         else:
             print("Virtual Machine {} status is {}".format(vm_name, status))
-            log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' invalid status '+status, 'error')
-            log_all(conn,vm_name, 'Backup VM \'' + vm_name + '\' Failed [exit-code:10]','error')
+            log_all(conn,vm_name, "Backup VM '" + vm_name + "' invalid status "+status, "error")
+            log_all(conn,vm_name, "Backup VM '" + vm_name + "' Failed [exit-code:10]","error")
             exit(10)
             
     else:
