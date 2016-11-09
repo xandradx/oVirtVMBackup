@@ -250,13 +250,14 @@ def main():
                     exit(3)
             except Exception as exit_code:
                 if (oVirt.if_exists_vm(vm=vmname)):
-                    log_all(oVirt,vmname, 'Backup VM \'' + vmname + '\' Failed [exit-code:'+str(exit_code.args[0])+']','error')
+                    log_all(oVirt, vmname,
+                            "Backup VM '" + vmname + "' Failed [exit-code:" + str(exit_code.args[0]) + "]", "error")
                 exit(exit_code)
             try:
-                log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup', 'normal')
+                log_all(oVirt,vmname, "Preparing VM " + vmname + " for TSM Backup", "normal")
                 change_meta(path_export + vmname + "-" + timestamp + images_path)
             except:
-                log_all(oVirt,vmname, 'Preparing VM ' + vmname + ' for TSM Backup Failed', 'error')
+                log_all(oVirt,vmname, "Preparing VM " + vmname + " for TSM Backup Failed", "error")
                 exit(5)
             try:
                 print("Uploading VM {} to TSM".format(vmname))
@@ -271,15 +272,15 @@ def main():
                                 'error')
                 log_all(oVirt,vmname, 'Uploading VM ' + vmname + ' to TSM has failed and moved to ' + tempdir,
                                 'error')
-                log_all(oVirt,vmname, 'Backup VM \'' + vmname + '\' Failed [exit-code:6]','error')
+                log_all(oVirt,vmname, "Backup VM '" + vmname + "' Failed [exit-code:6]","error")
                 exit(6)
             try:
                 remove_temp(path_export + vmname + "-" + timestamp)
             except:
                 print("Couldn't delete {}".format(path_export + vmname + "-" + timestamp))
-                log_all(oVirt,vmname, 'Backup VM \'' + vmname + '\' Failed [exit-code:7]','error')
+                log_all(oVirt,vmname, "Backup VM '" + vmname + "' Failed [exit-code:7]","error")
                 exit(7)
-            log_all(oVirt,vmname,'Backup Process for VM \''+vmname+'\' finished without errors [exit-code:0]','normal')
+            log_all(oVirt,vmname,"Backup Process for VM '"+vmname+"' finished without errors [exit-code:0]","normal")
     else:
         usage()
 
