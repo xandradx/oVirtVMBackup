@@ -1,4 +1,6 @@
 #!/bin/env python
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 
 import re
@@ -28,6 +30,13 @@ def args():
 def get_tsm(path,directory):
     try:
         check_output(["sudo", "dsmc", "retrieve", os.path.join(path, directory) + "/", "-subdir=yes"])
+        return 1
+    except CalledProcessError as error:
+        return error.returncode
+
+def change_owner(path,directory):
+    try:
+        check_output(["sudo", "chown", "-R", "36,36",os.path.join(path, directory)])
         return 1
     except CalledProcessError as error:
         return error.returncode
