@@ -34,13 +34,6 @@ def get_tsm(path,directory):
     except CalledProcessError as error:
         return error.returncode
 
-def change_owner(path,directory):
-    try:
-        check_output(["sudo", "chown", "-R", "36,36",os.path.join(path, directory)])
-        return 1
-    except CalledProcessError as error:
-        return error.returncode
-
 def ovf_get(vm_path):
     for root, dirs, files in os.walk(vm_path):
         for file in files:
