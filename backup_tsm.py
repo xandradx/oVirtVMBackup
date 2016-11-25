@@ -9,7 +9,6 @@ from ovirtvmbackup import OvirtBackup, rename_clone
 import sys
 import ConfigParser
 import subprocess
-import time
 import shutil
 
 config_file='/etc/ovirt-vm-backup/ovirt-vm-backup.conf'
@@ -29,6 +28,7 @@ def log_tsm(vmname,tsmuser,tsmpass,message,level):
 
 def log_all(conn,vmname,message,level):
     general = load_config(config_file)
+    message = timestamp + " " + message
     conn.log_event(vmname,message+' ('+vmname+')',level)
     date=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_file = open(general['log_file'],'a')
