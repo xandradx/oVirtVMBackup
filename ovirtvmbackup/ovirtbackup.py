@@ -328,7 +328,9 @@ class OvirtBackup:
             self.snapshot = self.api.vms.get(vm).snapshots.list(
                 all_content=True, description=desc)[0]
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
-            self.root = etree.fromstring(self.ovf)
+            print("initializing parser")
+            parser = etree.XMLParser(encoding='utf-8')
+            self.root = etree.fromstring(self.ovf, parser=parser)
             complete_path = path + vm
             ovf_path = os.path.join(complete_path, "running-" + self.api.vms.get(vm).id + '.ovf')
             with open(ovf_path, 'w') as ovfFile:
