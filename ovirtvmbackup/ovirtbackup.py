@@ -7,6 +7,7 @@ import re
 import shutil
 import sys
 import time
+import codecs
 from xml.dom import minidom
 from lxml import etree
 from ovirtsdk.api import API
@@ -323,23 +324,24 @@ class OvirtBackup:
         # Seccion funciones modificacion del xml
 
     def get_running_ovf(self, vm, desc, path):
-        """Get ovf info from snapshot"""
+        """Get ovf info from snapshot of original VM"""
         try:
             self.snapshot = self.api.vms.get(vm).snapshots.list(
                 all_content=True, description=desc)[0]
+            print("Get running ovf definition")
             self.ovf = self.snapshot.get_initialization().get_configuration().get_data()
-            print("initializing parser")
-            parser = etree.XMLParser(encoding='utf-8')
-            self.root = etree.fromstring(self.ovf, parser=parser)
+
             complete_path = path + vm
             ovf_path = os.path.join(complete_path, "running-" + self.api.vms.get(vm).id + '.ovf')
-            with open(ovf_path, 'w') as ovfFile:
-                ovfFile.write(self.ovf)
+            print("Write running ovf file")
+            ovfFile = codecs.open(ovf_path, encoding='utf-8', mode='w')
+            ovfFile.write(self.ovf)
+            ovfFile.close()
+            print("Write running ovf file: [ OK ]")
             return ovf_path
         except RequestError as err:
             print("Error: {} Reason: {}".format(err.status, err.reason))
             raise Exception(16)
-            #exit(16)
 
     def get_vm_export_xml(self, xml_export):
         xml_tag = xml_export.getElementsByTagName("rasd:StorageId")
