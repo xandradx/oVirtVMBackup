@@ -377,8 +377,10 @@ class OvirtBackup:
             directory = os.path.splitext(name)[0]
             os.mkdir(path + directory)
             save_name = path + directory + "/" + name
-            with open(save_name, 'a') as new_ovf_file:
+            print("Saving changes..")
+            with codecs.open(save_name, 'a', 'utf-8') as new_ovf_file:
                 new_ovf_file.write(xml.toxml())
+            print("Saving changes: [ OK ]")
         except OSError as e:
             print(e)
 
