@@ -351,9 +351,14 @@ class OvirtBackup:
         return storage_ids
 
     def add_storage_id_xml(self, xml_original, xml_export):
-        xml_doc = minidom.parse(xml_original)
-        xml_export_obj = minidom.parse(xml_export)
+        print("Reading xml's definitions")
+        with codecs.open(xml_original, "r", "utf-8") as inp:
+            xml_doc = minidom.parseString(inp.read().encode("utf-8"))
 
+        with codecs.open(xml_export, "r", "utf-8") as inp2:
+            xml_export_obj = minidom.parseString(inp2.read().encode("utf-8"))
+
+        print("Reading xml's definitions: [ OK ]")
         count = 0
 
         for item in xml_doc.getElementsByTagName("Device"):
